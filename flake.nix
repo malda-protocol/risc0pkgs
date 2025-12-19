@@ -1,15 +1,6 @@
 {
   description = "A collection of risc0 related packages";
 
-  nixConfig = {
-    extra-substituters = [
-      "https://risc0pkgs.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "risc0pkgs.cachix.org-1:EY5UazX0/Q7hGCm6xQSgKX6UkpzyOf07pxjfhhRK7kE="
-    ];
-  };
-
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     rust-overlay = {
@@ -45,7 +36,6 @@
       ];
     in
     {
-      herculesCI.ciSystems = [ "x86_64-linux" ];
       overlays.default = import ./overlay.nix;
       templates.default = {
         path = ./templates/default;

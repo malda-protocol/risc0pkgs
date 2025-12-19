@@ -1,24 +1,17 @@
 name: check
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   check:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, macos-14]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
-      - uses: cachix/cachix-action@v12
-        with:
-          name: risc0pkgs
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: System Info
         run: |
@@ -33,28 +26,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: nix build -L --no-link --show-trace .#packages.x86_64-linux.r0vm
 
-      - name: template
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          git config --global init.defaultBranch main
-          ./scripts/use-template.sh
-
-      - name: r0vm
-        if: matrix.os == 'macos-latest'
-        run: nix build -L --no-link --show-trace .#packages.x86_64-darwin.r0vm
-
-      - name: template
-        if: matrix.os == 'macos-latest'
-        run: |
-          git config --global init.defaultBranch main
-          ./scripts/use-template.sh
-
-      - name: r0vm
-        if: matrix.os == 'macos-14'
-        run: nix build -L --no-link --show-trace .#packages.aarch64-darwin.r0vm
-
-      - name: template
-        if: matrix.os == 'macos-14'
-        run: |
-          git config --global init.defaultBranch main
-          ./scripts/use-template.sh
+#      - name: template
+#        if: matrix.os == 'ubuntu-latest'
+#        run: |
+#          git config --global init.defaultBranch master
+#          ./scripts/use-template.sh

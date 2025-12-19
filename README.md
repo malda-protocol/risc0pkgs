@@ -4,13 +4,15 @@
 
 ## Getting Started
 
+CAUTION: Template is outdated!
+
 It's recommended to get started by initializing your project using the default template:
 
 ```sh
 mkdir risc0-workspace
 cd risc0-workspace
 
-nix flake init -t github:cspr-rad/risc0pkgs
+nix flake init -t github:malda-protocol/risc0pkgs
 
 git init
 git add -A
