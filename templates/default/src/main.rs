@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![no_main]
-#![no_std]
-
-use risc0_zkvm::guest::env;
-
-risc0_zkvm::guest::entry!(main);
+use hello_world::multiply;
+use hello_world_methods::MULTIPLY_ID;
 
 fn main() {
-    // Load the first number from the host
-    let a: u64 = env::read();
-    // Load the second number from the host
-    let b: u64 = env::read();
-    // Verify that neither of them are 1 (i.e. nontrivial factors)
-    if a == 1 || b == 1 {
-        panic!("Trivial factors")
-    }
-    // Compute the product while being careful with integer overflow
-    let product = a.checked_mul(b).expect("Integer overflow");
-    env::commit(&product);
+    println!("IMAGE ID: {:?}", MULTIPLY_ID);
+
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
+    // Pick two numbers
+    let (receipt, _) = multiply(17, 23);
+
+    // Here is where one would send 'receipt' over the network...
+
+    // Verify receipt, panic if it's wrong
+    receipt.verify(MULTIPLY_ID).expect(
+        "Code you have proven should successfully verify; did you specify the correct image ID?",
+    );
 }

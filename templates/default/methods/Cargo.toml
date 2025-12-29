@@ -1,10 +1,10 @@
 [package]
-name = "methods"
+name = "hello-world-methods"
 version = "0.1.0"
 edition = "2021"
 
 [build-dependencies]
-risc0-build = "=0.21.0"
+risc0-build = { version = "=3.0.4" }
 
 [package.metadata.risc0]
 methods = ["guest"]

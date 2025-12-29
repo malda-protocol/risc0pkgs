@@ -1,0 +1,15 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index b495ac9..12102a7 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -353,6 +353,10 @@ fn guest_methods<G: GuestBuilder>(
+ fn sanitized_cmd(tool: &str) -> Command {
+     let mut cmd = Command::new(tool);
+     for (key, _val) in env::vars().filter(|x| x.0.starts_with("CARGO")) {
++        // Custom home is used by ipetkov/crane.
++        if key == "CARGO_HOME" {
++            continue;
++        }
+         cmd.env_remove(key);
+     }
+     cmd.env_remove("RUSTUP_TOOLCHAIN");
