@@ -11,23 +11,7 @@
 extraBuildRustPackageAttrs@{ nativeBuildInputs ? [ ], preBuild ? "", buildInputs ? [ ], ... }:
 
 let
-  toolchain = rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-    extensions = [ "rust-src" ];
-  });
-  rustup-mock = writeShellApplication {
-    name = "rustup";
-    text = ''
-      # the buildscript uses rustup toolchain to check
-      # whether the risc0 toolchain was installed
-      if [[ "$1" = "toolchain" ]]
-      then
-        printf "risc0\n"
-      elif [[ "$1" = "+risc0" ]]
-      then
-        printf "${toolchain}/bin/rustc"
-      fi
-    '';
-  };
+  toolchain = rust-bin.stable.latest.default;
   extraBuildRustPackageAttrsNoArgs = builtins.removeAttrs extraBuildRustPackageAttrs [ "buildInputs" "nativeBuildInputs" "preBuild" ];
 in
 

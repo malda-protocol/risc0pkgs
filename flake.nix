@@ -28,10 +28,8 @@
         in
         builtins.foldl' op { } systems;
 
+      # NOTE: Currently r0vm and risc0-rust packages support only `x64_64-linux`.
       eachDefaultSystem = eachSystem [
-        "aarch64-darwin"
-        "x86_64-darwin"
-        "aarch64-linux"
         "x86_64-linux"
       ];
     in
@@ -56,7 +54,7 @@
       {
         inherit (pkgs) lib;
         packages = {
-          inherit (pkgs) r0vm;
+          inherit (pkgs) r0vm risc0-rust;
         };
 
         formatter = pkgs.nixpkgs-fmt;
