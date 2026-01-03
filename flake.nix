@@ -28,9 +28,11 @@
         in
         builtins.foldl' op { } systems;
 
-      # NOTE: Currently r0vm and risc0-rust packages support only `x64_64-linux`.
       eachDefaultSystem = eachSystem [
         "x86_64-linux"
+        "aarch64-darwin"
+        "aarch64-linux" # builds from source (no prebuilt binaries available)
+        "x86_64-darwin" # builds from source (no prebuilt binaries available)
       ];
     in
     {
