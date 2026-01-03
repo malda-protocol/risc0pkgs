@@ -15,7 +15,10 @@ let
   prebuilt = callPackage ./prebuilt.nix { };
   fromSource = callPackage ./from-source.nix { };
 
-  selectedPackage = if usePrebuilt then prebuilt else fromSource;
+  selectedPackage =
+    if usePrebuilt
+    then prebuilt
+    else lib.warn "risc0-rust: Building Rust toolchain from source. This will take a long time (1+ hours)." fromSource;
 in
 selectedPackage.overrideAttrs (old: {
   passthru = (old.passthru or {}) // {
