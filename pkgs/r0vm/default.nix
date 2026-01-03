@@ -1,52 +1,25 @@
 { lib
 , stdenv
-, fetchurl
-, autoPatchelfHook
+, callPackage
+, forceFromSource ? false
 }:
 
-stdenv.mkDerivation rec {
-  pname = "r0vm";
-  # NOTE: You can find the latest version at https://github.com/risc0/risc0/releases/latest.
-  version = "3.0.4";
+let
+  # Platforms with prebuilt binaries available
+  prebuiltPlatforms = [ "x86_64-linux" "aarch64-darwin" ];
 
-  src = fetchurl (
-    {
-      x86_64-linux = {
-        url = "https://github.com/risc0/risc0/releases/download/v${version}/cargo-risczero-x86_64-unknown-linux-gnu.tgz";
-        hash = "sha256-Oyn7XrE8/yVbL/4PbnlirEqq9q9ZcFYn4oUfHbH6eC8=";
-      };
-      aarch64-darwin = {
-        url = "https://github.com/risc0/risc0/releases/download/v${version}/cargo-risczero-aarch64-apple-darwin.tgz";
-        hash = "sha256-9tSEbVzWouUWUFm1ZvmjH4eVgrwlNLlQFan0BNObGHU=";
-      };
-    }.${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}")
-  );
+  hasPrebuilt = builtins.elem stdenv.hostPlatform.system prebuiltPlatforms;
 
-  sourceRoot = ".";
+  usePrebuilt = hasPrebuilt && !forceFromSource;
 
-  nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  prebuilt = callPackage ./prebuilt.nix { };
+  fromSource = callPackage ./from-source.nix { };
 
-  buildInputs = lib.optionals stdenv.isLinux [
-    # Required for ELF-patching libstdc++.so (C++ standard library) and libgcc_s.so (GCC runtime library).
-    stdenv.cc.cc.lib
-  ];
-
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out/bin
-    install -m755 r0vm $out/bin/r0vm
-
-    runHook postInstall
-  '';
-
-  doInstallCheck = true;
-
-  installCheckPhase = ''
-    runHook preInstallCheck
-
-    $out/bin/r0vm --version
-
-    runHook postInstallCheck
-  '';
-}
+  selectedPackage = if usePrebuilt then prebuilt else fromSource;
+in
+selectedPackage.overrideAttrs (old: {
+  passthru = (old.passthru or {}) // {
+    inherit prebuilt fromSource;
+    isPrebuilt = usePrebuilt;
+  };
+})
