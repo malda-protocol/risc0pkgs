@@ -1,55 +1,25 @@
 { lib
 , stdenv
-, fetchurl
-, autoPatchelfHook
-, zlib
+, callPackage
+, forceFromSource ? false
 }:
 
-stdenv.mkDerivation rec {
-  pname = "risc0-rust";
-  # NOTE: You can find the latest version at https://github.com/risc0/rust/releases/latest.
-  # Version format: r0.X.Y.Z where X.Y.Z is the Rust toolchain version
-  version = "r0.1.91.1";
+let
+  # Platforms with prebuilt binaries available
+  prebuiltPlatforms = [ "x86_64-linux" "aarch64-darwin" ];
 
-  src = fetchurl (
-    {
-      x86_64-linux = {
-        url = "https://github.com/risc0/rust/releases/download/${version}/rust-toolchain-x86_64-unknown-linux-gnu.tar.gz";
-        hash = "sha256-4IKh3ESr3vHZVGApWnAhjrKUq5mbg0Vw7JMtBWQczl0=";
-      };
-      aarch64-darwin = {
-        url = "https://github.com/risc0/rust/releases/download/${version}/rust-toolchain-aarch64-apple-darwin.tar.gz";
-        hash = "sha256-U8t7yy5awhooOtTf/JRCIIBq0V4RQdoYHRNfrB7ypOQ=";
-      };
-    }.${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}")
-  );
+  hasPrebuilt = builtins.elem stdenv.hostPlatform.system prebuiltPlatforms;
 
-  sourceRoot = ".";
+  usePrebuilt = hasPrebuilt && !forceFromSource;
 
-  nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  prebuilt = callPackage ./prebuilt.nix { };
+  fromSource = callPackage ./from-source.nix { };
 
-  buildInputs = lib.optionals stdenv.isLinux [
-    stdenv.cc.cc.lib
-    zlib
-  ];
-
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out
-    cp -r bin $out/bin
-    cp -r lib $out/lib
-
-    runHook postInstall
-  '';
-
-  doInstallCheck = true;
-
-  installCheckPhase = ''
-    runHook preInstallCheck
-
-    $out/bin/rustc --version
-
-    runHook postInstallCheck
-  '';
-}
+  selectedPackage = if usePrebuilt then prebuilt else fromSource;
+in
+selectedPackage.overrideAttrs (old: {
+  passthru = (old.passthru or {}) // {
+    inherit prebuilt fromSource;
+    isPrebuilt = usePrebuilt;
+  };
+})
