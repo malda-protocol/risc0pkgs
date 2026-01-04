@@ -85,6 +85,9 @@ rustPlatform.buildRustPackage (cleanedArgs // {
 
     export PATH=${r0vm}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
+
+    # Set sysroot for the riscv32im target so cargo/rustc can find core libs
+    export CARGO_TARGET_RISCV32IM_RISC0_ZKVM_ELF_RUSTFLAGS="--sysroot=$HOME/.risc0/toolchains/${toolchainName}"
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''
