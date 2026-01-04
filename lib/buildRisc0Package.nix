@@ -72,10 +72,10 @@ rustPlatform.buildRustPackage (cleanedArgs // {
   preBuild = ''
     export HOME=$TMPDIR
 
-    # Set up risc0 toolchain in expected location
+    # Set up risc0 toolchain in expected location using symlinks.
     mkdir -p $HOME/.risc0/toolchains/${toolchainName}
-    cp -r ${risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/
-    cp -r ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/
+    ln -s ${risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/bin
+    ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
 
     # Create settings.toml with default rust version
     cat > $HOME/.risc0/settings.toml << EOF
