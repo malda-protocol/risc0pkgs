@@ -4,6 +4,7 @@
 , makeWrapper
 , r0vm
 , risc0-rust
+, rustc
 , lld
 }:
 
@@ -87,8 +88,30 @@ rustPlatform.buildRustPackage (cleanedArgs // {
     export PATH=${r0vm}/bin:${lld}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
 
-    # Set sysroot for the riscv32im target so cargo/rustc can find core libs
-    export CARGO_TARGET_RISCV32IM_RISC0_ZKVM_ELF_RUSTFLAGS="--sysroot=$HOME/.risc0/toolchains/${toolchainName}"
+    # Create a smart wrapper script for rustc that dispatches based on target:
+    # - For riscv32im-risc0-zkvm-elf: use risc0-rust with correct sysroot
+    # - For host (build scripts): use standard nixpkgs rustc
+    mkdir -p $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin
+    cat > $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc << 'WRAPPER'
+#!/bin/sh
+# Check if compiling for riscv target
+for arg in "$@"; do
+  case "$arg" in
+    riscv32im-risc0-zkvm-elf|--target=riscv32im-risc0-zkvm-elf)
+      exec ${risc0-rust}/bin/rustc --sysroot ${risc0-rust} "$@"
+      ;;
+  esac
+done
+# For host builds (build scripts, proc-macros), use standard rustc
+exec ${rustc}/bin/rustc "$@"
+WRAPPER
+    chmod +x $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc
+
+    # Update the bin symlink to point to our wrapper
+    rm $HOME/.risc0/toolchains/${toolchainName}/bin
+    ln -s $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin $HOME/.risc0/toolchains/${toolchainName}/bin
+
+    unset RUSTC_WRAPPER
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''
