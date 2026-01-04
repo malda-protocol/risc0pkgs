@@ -33,6 +33,9 @@ let
 
   toolchainName = "v${rustVersion}-rust-${arch}";
 
+  # Prebuilt toolchains include host libs, from-source only has riscv libs
+  isPrebuilt = risc0-rust.isPrebuilt or false;
+
   # Create combined vendor from all lock files
   vendors = map (lockFile: rustPlatform.importCargoLock { inherit lockFile; }) cargoLockFiles;
   vendorPaths = lib.concatStringsSep " " (map (v: "${v}") vendors);
@@ -85,10 +88,18 @@ rustPlatform.buildRustPackage (cleanedArgs // {
     export PATH=${r0vm}/bin:${lld}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
 
-    # Create a smart wrapper script for rustc that dispatches based on target:
-    # - For riscv32im-risc0-zkvm-elf: use risc0-rust with correct sysroot
-    # - For host (build scripts): use standard nixpkgs rustc
+    # Create wrapper script for rustc.
+    # Prebuilt toolchains have both host and riscv libs, so use risc0-rust for everything.
+    # From-source only has riscv libs, so dispatch based on target.
     mkdir -p $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin
+    ${if isPrebuilt then ''
+    # Prebuilt: use risc0-rust for all builds (has both host and riscv libs)
+    cat > $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc << 'WRAPPER'
+#!/bin/sh
+exec ${risc0-rust}/bin/rustc --sysroot ${risc0-rust} "$@"
+WRAPPER
+    '' else ''
+    # From-source: dispatch based on target (only has riscv libs)
     cat > $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc << 'WRAPPER'
 #!/bin/sh
 # Check if compiling for riscv target
@@ -102,6 +113,7 @@ done
 # For host builds (build scripts, proc-macros), use standard rustc
 exec ${rustc}/bin/rustc "$@"
 WRAPPER
+    ''}
     chmod +x $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc
 
     # Update the bin symlink to point to our wrapper
