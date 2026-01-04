@@ -80,10 +80,7 @@ rustPlatform.buildRustPackage (cleanedArgs // {
     ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
 
     # Create settings.toml with default rust version
-    cat > $HOME/.risc0/settings.toml << EOF
-    [default_versions]
-    rust = "${rustVersion}"
-    EOF
+    printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
 
     export PATH=${r0vm}/bin:${lld}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
