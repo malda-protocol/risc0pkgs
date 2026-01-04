@@ -1,123 +1,105 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    crane.url = "github:ipetkov/crane";
     risc0pkgs.url = "github:malda-protocol/risc0pkgs";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, crane, risc0pkgs, rust-overlay, ... }:
+  outputs = { self, nixpkgs, risc0pkgs, ... }:
     let
-      forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" ];
+      forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
     in
     {
       packages = forAllSystems (system:
         let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ (import rust-overlay) ];
-          };
+          pkgs = import nixpkgs { inherit system; };
 
           r0vm = risc0pkgs.packages.${system}.r0vm;
           risc0-rust = risc0pkgs.packages.${system}.risc0-rust;
 
-          toolchainName = "v1.91.1-rust-x86_64-unknown-linux-gnu";
+          # Toolchain version must match what's in risc0-rust
+          rustVersion = "1.91.1";
+          arch = {
+            x86_64-linux = "x86_64-unknown-linux-gnu";
+            aarch64-linux = "aarch64-unknown-linux-gnu";
+            aarch64-darwin = "aarch64-apple-darwin";
+            x86_64-darwin = "x86_64-apple-darwin";
+          }.${system};
+          toolchainName = "v${rustVersion}-rust-${arch}";
 
-          # Rust toolchain with RISCV target
-          rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-            targets = [ "riscv64gc-unknown-none-elf" ];
+          # Vendor dependencies from all lock files and combine them
+          combinedVendor = pkgs.stdenv.mkDerivation {
+            name = "combined-cargo-vendor";
+            phases = [ "installPhase" ];
+
+            mainVendor = pkgs.rustPlatform.importCargoLock {
+              lockFile = ./Cargo.lock;
+            };
+            methodsVendor = pkgs.rustPlatform.importCargoLock {
+              lockFile = ./methods/Cargo.lock;
+            };
+            guestVendor = pkgs.rustPlatform.importCargoLock {
+              lockFile = ./methods/guest/Cargo.lock;
+            };
+
+            installPhase = ''
+              mkdir -p $out
+              # Copy all crates from all vendor directories
+              for vendor in $mainVendor $methodsVendor $guestVendor; do
+                for crate in $vendor/*; do
+                  name=$(basename $crate)
+                  if [ ! -e "$out/$name" ]; then
+                    cp -r $crate $out/
+                  fi
+                done
+              done
+            '';
           };
+        in
+        {
+          default = pkgs.rustPlatform.buildRustPackage {
+            pname = "hello-world";
+            version = "0.1.0";
+            src = ./.;
 
-          craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+            cargoDeps = combinedVendor;
 
-          # Vendor dependencies from ALL lock files
-          vendoredDeps = craneLib.vendorMultipleCargoDeps {
-            cargoLockList = [
-              ./Cargo.lock
-              ./methods/Cargo.lock
-              ./methods/guest/Cargo.lock
-            ];
+            nativeBuildInputs = [ r0vm pkgs.makeWrapper ];
 
-            overrideVendorCargoPackage = p: drv:
-              # For example, patch a specific crate, in this case byteorder-1.5.0
-              if p.name == "risc0-build" then #  && p.version == "3.0.4"
-                drv.overrideAttrs (_old: {
-                  # Specifying an arbitrary patch to apply
-                  patches = [
-                    ./0001-do-not-sanitize-cargo-home.patch
-                  ];
+            postInstall = ''
+              wrapProgram $out/bin/hello-world \
+                --prefix PATH : ${r0vm}/bin
+            '';
 
-                  # Similarly we can also run additional hooks to make changes
-                  postPatch = ''
-                    echo running some arbitrary command to make modifications
-                  '';
-                })
-              else
-                # Nothing to change, leave the derivations as is
-                drv;
-          };
-
-          # cleanCargoSource preserves guest (it has Cargo.toml)
-          src = craneLib.cleanCargoSource ./.;
-
-          commonArgs = {
-            inherit src;
-            strictDeps = true;
-            cargoVendorDir = vendoredDeps;
-
-            RISC0_BUILD_LOCKED = "1";
-            nativeBuildInputs = [ r0vm ];
             preBuild = ''
               export HOME=$TMPDIR
+
+              # Set up risc0 toolchain in expected location
               mkdir -p $HOME/.risc0/toolchains/${toolchainName}
               cp -r ${risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/
               cp -r ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/
+
+              # Create settings.toml with default rust version
+              cat > $HOME/.risc0/settings.toml << EOF
+              [default_versions]
+              rust = "${rustVersion}"
+              EOF
+
               export PATH=${r0vm}/bin:$PATH
+              export RISC0_BUILD_LOCKED=1
             '';
-          };
 
-          # Build everything in one pass to avoid stale artifacts
-          mainPackage = craneLib.mkCargoDerivation (commonArgs // {
-            cargoArtifacts = null;
             doCheck = false;
-            buildPhaseCargoCommand = "cargo build --release";
-            installPhaseCommand = "mkdir -p $out/bin && cp target/release/hello-world $out/bin/";
-
-            postInstall = ''
-              mkdir -p $out/share
-              cp target/release/build/hello-world-methods-*/out/methods.rs $out/share/ || true
-              cp -r target/riscv-guest $out/share/ || true
-
-              # Generate image ID from guest ELF
-              for elf in target/riscv-guest/hello-world-methods/*/riscv32im-risc0-zkvm-elf/release/*.bin; do
-                if [ -f "$elf" ]; then
-                  ${r0vm}/bin/r0vm --elf "$elf" --id > $out/share/$(basename "$elf" .bin).id
-                fi
-              done
-            '';
-          });
-        in
-        {
-          default = mainPackage;
+          };
         }
       );
 
       devShells = forAllSystems (system:
         let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ (import rust-overlay) ];
-          };
-          rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-            targets = [ "riscv64gc-unknown-none-elf" ];
-          };
+          pkgs = import nixpkgs { inherit system; };
         in
         {
           default = pkgs.mkShell {
-            nativeBuildInputs = [ rustToolchain ];
+            nativeBuildInputs = with pkgs; [ rustc cargo ];
           };
         }
       );
