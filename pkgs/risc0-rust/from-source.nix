@@ -1,4 +1,5 @@
 { lib
+, stdenv
 , rustc-unwrapped
 , fetchurl
 , llvmPackages
@@ -6,6 +7,14 @@
 
 let
   rustVersion = "1.91.1";
+
+  # Map Nix system to Rust target triple
+  hostTarget = {
+    x86_64-linux = "x86_64-unknown-linux-gnu";
+    aarch64-linux = "aarch64-unknown-linux-gnu";
+    x86_64-darwin = "x86_64-apple-darwin";
+    aarch64-darwin = "aarch64-apple-darwin";
+  }.${stdenv.hostPlatform.system};
 in
 
 rustc-unwrapped.overrideAttrs (oldAttrs: {
@@ -30,13 +39,13 @@ rustc-unwrapped.overrideAttrs (oldAttrs: {
     })
   ];
 
-  # Override configure flags to build ONLY the Risc0 zkVM target.
-  # Filter out flags not needed/supported for bare-metal zkvm target.
+  # Override configure flags to build both host and Risc0 zkVM targets.
+  # This ensures we have libs for both host (build scripts) and riscv (guest code).
   configureFlags = (lib.filter (flag:
     !(lib.hasPrefix "--target=" flag)
     && flag != "--enable-profiler"  # profiler needs libc
   ) (oldAttrs.configureFlags or [])) ++ [
-    "--target=riscv32im-risc0-zkvm-elf"
+    "--target=${hostTarget},riscv32im-risc0-zkvm-elf"
     "--disable-docs"  # docs fail on bare-metal target
     # Use unwrapped clang for RISC-V cross-compilation
     # (wrapped clang adds hardening flags not supported on RISC-V)
