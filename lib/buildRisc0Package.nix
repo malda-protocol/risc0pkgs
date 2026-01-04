@@ -4,6 +4,7 @@
 , makeWrapper
 , r0vm
 , risc0-rust
+, lld
 }:
 
 {
@@ -83,7 +84,7 @@ rustPlatform.buildRustPackage (cleanedArgs // {
     rust = "${rustVersion}"
     EOF
 
-    export PATH=${r0vm}/bin:$PATH
+    export PATH=${r0vm}/bin:${lld}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
 
     # Set sysroot for the riscv32im target so cargo/rustc can find core libs
