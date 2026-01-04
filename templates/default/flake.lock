@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1766410818,
-        "narHash": "sha256-ruVneSx6wFy5PMw1ow3BE+znl653TJ6+eeNUj4B/9y8=",
+        "lastModified": 1767364772,
+        "narHash": "sha256-fFUnEYMla8b7UKjijLnMe+oVFOz6HjijGGNS1l7dYaQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "3a7affa77a5a539afa1c7859e2c31abdb1aeadf3",
+        "rev": "16c7794d0a28b5a37904d55bcca36003b9109aaa",
         "type": "github"
       },
       "original": {
@@ -38,14 +38,17 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1767468414,
-        "narHash": "sha256-3DDyjAmFQHKKFlY1iXiB1cRkAGgTf+qX3dy5xvdiIqA=",
-        "path": "/home/andrew/Downloads/tmp/risc0pkgs",
-        "type": "path"
+        "lastModified": 1767534917,
+        "narHash": "sha256-fOz9dtaVLsCmVx9VVNMJjrlZLtPO1j8BVgN7TjJfirY=",
+        "owner": "malda-protocol",
+        "repo": "risc0pkgs",
+        "rev": "08cd771684ef88f6145d649ea82594c6dc6c968c",
+        "type": "github"
       },
       "original": {
-        "path": "/home/andrew/Downloads/tmp/risc0pkgs",
-        "type": "path"
+        "owner": "malda-protocol",
+        "repo": "risc0pkgs",
+        "type": "github"
       }
     },
     "root": {
