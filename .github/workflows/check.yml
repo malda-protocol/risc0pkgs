@@ -25,8 +25,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: nix build -L --no-link --show-trace .#packages.x86_64-linux.r0vm
 
-#      - name: template
-#        if: matrix.os == 'ubuntu-latest'
-#        run: |
-#          git config --global init.defaultBranch master
-#          ./scripts/use-template.sh
+      - name: template
+        run: |
+          git config --global init.defaultBranch master
+          ./scripts/use-template.sh
