@@ -32,11 +32,33 @@
 
       devShells = forAllSystems (system:
         let
-          pkgs = import nixpkgs { inherit system; };
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ risc0pkgs.overlays.default ];
+          };
+
+          rustVersion = pkgs.lib.removePrefix "r0." pkgs.risc0-rust.version;
+          arch = {
+            x86_64-linux = "x86_64-unknown-linux-gnu";
+            aarch64-linux = "aarch64-unknown-linux-gnu";
+            aarch64-darwin = "aarch64-apple-darwin";
+            x86_64-darwin = "x86_64-apple-darwin";
+          }.${system};
+          toolchainName = "v${rustVersion}-rust-${arch}";
         in
         {
           default = pkgs.mkShell {
-            nativeBuildInputs = with pkgs; [ rustc cargo ];
+            nativeBuildInputs = [ pkgs.cargo pkgs.r0vm ];
+
+            shellHook = ''
+              # Set up risc0 toolchain in expected location using symlinks.
+              mkdir -p $HOME/.risc0/toolchains/${toolchainName}
+              ln -s ${pkgs.risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/bin
+              ln -s ${pkgs.risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
+
+              # Create settings.toml with default rust version
+              printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
+            '';
           };
         }
       );
