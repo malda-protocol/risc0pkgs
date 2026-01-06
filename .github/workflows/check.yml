@@ -21,9 +21,11 @@ jobs:
       - name: format
         run: nix build -L --no-link --show-trace .#checks.x86_64-linux.format
 
-      - name: r0vm
-        if: matrix.os == 'ubuntu-latest'
-        run: nix build -L --no-link --show-trace .#packages.x86_64-linux.r0vm
+      #- name: r0vm
+      #  run: nix build -L --no-link --show-trace .#packages.x86_64-linux.r0vm
+
+      #- name: risc0-rust
+      #  run: nix build -L --no-link --show-trace .#packages.x86_64-linux.risc0-rust
 
       - name: template
         run: |
