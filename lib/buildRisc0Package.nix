@@ -4,8 +4,6 @@
 , makeWrapper
 , r0vm
 , risc0-rust
-, rustc
-, lld
 }:
 
 { pname
@@ -81,21 +79,8 @@ rustPlatform.buildRustPackage (cleanedArgs // {
     # Create settings.toml with default rust version
     printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
 
-    export PATH=${r0vm}/bin:${lld}/bin:$PATH
+    export PATH=${r0vm}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
-
-    # Create wrapper script for rustc that sets the correct sysroot.
-    # Both prebuilt and from-source toolchains have host and riscv libs.
-    mkdir -p $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin
-    printf '#!/bin/sh\nexec %s --sysroot %s "$@"\n' "${risc0-rust}/bin/rustc" "${risc0-rust}" \
-      > $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc
-    chmod +x $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin/rustc
-
-    # Update the bin symlink to point to our wrapper
-    rm $HOME/.risc0/toolchains/${toolchainName}/bin
-    ln -s $HOME/.risc0/toolchains/${toolchainName}/wrapped-bin $HOME/.risc0/toolchains/${toolchainName}/bin
-
-    unset RUSTC_WRAPPER
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''
