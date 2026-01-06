@@ -8,16 +8,15 @@
 , lld
 }:
 
-{
-  pname,
-  version ? "0.1.0",
-  src,
-  cargoLockFiles ? [ ],
-  nativeBuildInputs ? [ ],
-  preBuild ? "",
-  postInstall ? "",
-  wrapBinaries ? true,
-  ...
+{ pname
+, version ? "0.1.0"
+, src
+, cargoLockFiles ? [ ]
+, nativeBuildInputs ? [ ]
+, preBuild ? ""
+, postInstall ? ""
+, wrapBinaries ? true
+, ...
 }@args:
 
 let

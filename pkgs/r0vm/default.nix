@@ -18,7 +18,7 @@ let
   selectedPackage = if usePrebuilt then prebuilt else fromSource;
 in
 selectedPackage.overrideAttrs (old: {
-  passthru = (old.passthru or {}) // {
+  passthru = (old.passthru or { }) // {
     inherit prebuilt fromSource;
     isPrebuilt = usePrebuilt;
   };

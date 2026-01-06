@@ -21,7 +21,7 @@ let
     else lib.warn "risc0-rust: Building Rust toolchain from source. This will take a long time (1+ hours)." fromSource;
 in
 selectedPackage.overrideAttrs (old: {
-  passthru = (old.passthru or {}) // {
+  passthru = (old.passthru or { }) // {
     inherit prebuilt fromSource;
     isPrebuilt = usePrebuilt;
   };
