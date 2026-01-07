@@ -10,7 +10,7 @@
 { pname
 , version ? "0.1.0"
 , src
-, cargoLockFiles ? [ ]
+, cargoLocks ? [ ]  # List of { lockFile, outputHashes? } or just paths
 , nativeBuildInputs ? [ ]
 , preBuild ? ""
 , postInstall ? ""
@@ -32,8 +32,71 @@ let
   toolchainName = "v${rustVersion}-rust-${arch}";
 
   # Create combined vendor from all lock files
-  vendors = map (lockFile: rustPlatform.importCargoLock { inherit lockFile; }) cargoLockFiles;
+  # Each entry can be a path or { lockFile, outputHashes? }
+  normalizeCargoLock = entry:
+    if builtins.isAttrs entry
+    then entry
+    else { lockFile = entry; };
+
+  vendors = map (entry:
+    let normalized = normalizeCargoLock entry;
+    in rustPlatform.importCargoLock {
+      lockFile = normalized.lockFile;
+      outputHashes = normalized.outputHashes or { };
+    }
+  ) cargoLocks;
   vendorPaths = lib.concatStringsSep " " (map (v: "${v}") vendors);
+
+  # Extract git sources from all Cargo.lock files
+  extractGitSources = lockFile:
+    let
+      lock = builtins.fromTOML (builtins.readFile lockFile);
+      packages = lock.package or [ ];
+      gitPackages = builtins.filter (p: p ? source && lib.hasPrefix "git+" (p.source or "")) packages;
+    in
+    map (p: p.source) gitPackages;
+
+  allGitSources = lib.unique (lib.flatten (map (entry:
+    extractGitSources (normalizeCargoLock entry).lockFile
+  ) cargoLocks));
+
+  # URL decode common percent-encoded characters
+  urlDecode = s: builtins.replaceStrings
+    [ "%2F" "%2f" "%3A" "%3a" "%40" "%20" ]
+    [ "/"   "/"   ":"   ":"   "@"   " "  ]
+    s;
+
+  # Generate cargo config entries for git sources
+  # source = "git+https://github.com/foo/bar?tag=v1.0#commit"
+  # -> [source."git+https://github.com/foo/bar?tag=v1.0"]
+  gitSourceToConfig = source:
+    let
+      # Remove the #commit suffix for the source key
+      sourceKey = builtins.head (lib.splitString "#" source);
+      # Extract base URL (without query params) for git field
+      baseUrl = builtins.head (lib.splitString "?" (lib.removePrefix "git+" source));
+      # Extract query params
+      queryPart = let parts = lib.splitString "?" (lib.removePrefix "git+" source);
+                  in if builtins.length parts > 1
+                     then builtins.head (lib.splitString "#" (builtins.elemAt parts 1))
+                     else "";
+      # Parse tag/branch/rev from query (URL-decode the values)
+      tagMatch = builtins.match ".*tag=([^&#]+).*" "?${queryPart}";
+      branchMatch = builtins.match ".*branch=([^&#]+).*" "?${queryPart}";
+      revMatch = builtins.match ".*rev=([^&#]+).*" "?${queryPart}";
+      tag = if tagMatch != null then urlDecode (builtins.head tagMatch) else null;
+      branch = if branchMatch != null then urlDecode (builtins.head branchMatch) else null;
+      rev = if revMatch != null then urlDecode (builtins.head revMatch) else null;
+    in ''
+      [source."${sourceKey}"]
+      git = "${baseUrl}"
+      ${lib.optionalString (tag != null) ''tag = "${tag}"''}
+      ${lib.optionalString (branch != null) ''branch = "${branch}"''}
+      ${lib.optionalString (rev != null) ''rev = "${rev}"''}
+      replace-with = "vendored-sources"
+    '';
+
+  gitSourcesConfig = lib.concatStringsSep "\n" (map gitSourceToConfig allGitSources);
 
   combinedVendor = stdenv.mkDerivation {
     name = "${pname}-combined-cargo-vendor";
@@ -54,7 +117,7 @@ let
 
   # Remove custom args that shouldn't be passed to buildRustPackage
   cleanedArgs = builtins.removeAttrs args [
-    "cargoLockFiles"
+    "cargoLocks"
     "nativeBuildInputs"
     "preBuild"
     "postInstall"
@@ -86,6 +149,12 @@ rustPlatform.buildRustPackage (cleanedArgs // {
 
     # Create settings.toml with default rust version
     printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
+
+    # Add git source replacements to cargo config.
+    # buildRustPackage only sets up crates-io replacement, not git sources.
+    cat >> /build/.cargo/config.toml << 'GITCONFIG'
+${gitSourcesConfig}
+GITCONFIG
 
     export PATH=${r0vm}/bin:${lld}/bin:$PATH
     export RISC0_BUILD_LOCKED=1

@@ -21,7 +21,7 @@
             pname = "hello-world";
             version = "0.1.0";
             src = ./.;
-            cargoLockFiles = [
+            cargoLocks = [
               ./Cargo.lock
               ./methods/Cargo.lock
               ./methods/guest/Cargo.lock
