@@ -6,4 +6,9 @@ edition = "2021"
 [workspace]
 
 [dependencies]
-risc0-zkvm = { version = "=3.0.4", default-features = false }
+risc0-zkvm = { version = "=3.0.4", default-features = false, features = ["std"] }
+
+# Example git dependency.
+# CAUTION: buildRisc0Package does NOT support a scenario where particular **crate version** is vendored **both** from crates.io and git.
+#          This is rather uncommon, but please be aware of it.
+base64 = { git = "https://github.com/marshallpierce/rust-base64", tag = "v0.10.0", default-features = false }

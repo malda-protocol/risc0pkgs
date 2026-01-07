@@ -24,7 +24,12 @@
             cargoLocks = [
               ./Cargo.lock
               ./methods/Cargo.lock
-              ./methods/guest/Cargo.lock
+              {
+                lockFile = ./methods/guest/Cargo.lock;
+                outputHashes = {
+                  "base64-0.10.0" = "sha256-0NSljIX/yIt1dS+bq6i3DyeW82SosrScnH+/yTCMLII=";
+                };
+              }
             ];
           };
         }
