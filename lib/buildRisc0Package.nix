@@ -4,6 +4,7 @@
 , makeWrapper
 , r0vm
 , risc0-rust
+, lld
 }:
 
 { pname
@@ -71,15 +72,22 @@ rustPlatform.buildRustPackage (cleanedArgs // {
   preBuild = ''
     export HOME=$TMPDIR
 
-    # Set up risc0 toolchain in expected location using symlinks.
-    mkdir -p $HOME/.risc0/toolchains/${toolchainName}
-    ln -s ${risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/bin
+    # Set up risc0 toolchain in expected location.
+    # We need a wrapper that unsets LD_LIBRARY_PATH because nixpkgs'
+    # buildRustPackage sets it to include nixpkgs rustc libs, which causes
+    # risc0-rust's rustc to detect the wrong sysroot.
+    # See docs/LD_LIBRARY_PATH-sysroot-issue.md for details.
+    mkdir -p $HOME/.risc0/toolchains/${toolchainName}/bin
     ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
+
+    printf '%s\n' '#!/bin/sh' 'unset LD_LIBRARY_PATH' 'exec ${risc0-rust}/bin/rustc "$@"' \
+      > $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
+    chmod +x $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
 
     # Create settings.toml with default rust version
     printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
 
-    export PATH=${r0vm}/bin:$PATH
+    export PATH=${r0vm}/bin:${lld}/bin:$PATH
     export RISC0_BUILD_LOCKED=1
   '' + preBuild;
 
