@@ -38,11 +38,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1767812732,
-        "narHash": "sha256-hL/YGSuFl3Ruslas2tuDa/JmnYA9f0dDlMrw/1f6ZgA=",
+        "lastModified": 1767864551,
+        "narHash": "sha256-K0rH0RSKHycqT4uETCg1DakKwD92WLbNKJUdFA40PEU=",
         "owner": "malda-protocol",
         "repo": "risc0pkgs",
-        "rev": "0ff1cd0ea389d57c2c8dfb51d62e977ac2feb6b0",
+        "rev": "6b8d3ce6e99e24ac81e14b16ca6f97742935fb0b",
         "type": "github"
       },
       "original": {
