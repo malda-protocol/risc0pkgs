@@ -38,13 +38,15 @@ let
     then entry
     else { lockFile = entry; };
 
-  vendors = map (entry:
-    let normalized = normalizeCargoLock entry;
-    in rustPlatform.importCargoLock {
-      lockFile = normalized.lockFile;
-      outputHashes = normalized.outputHashes or { };
-    }
-  ) cargoLocks;
+  vendors = map
+    (entry:
+      let normalized = normalizeCargoLock entry;
+      in rustPlatform.importCargoLock {
+        lockFile = normalized.lockFile;
+        outputHashes = normalized.outputHashes or { };
+      }
+    )
+    cargoLocks;
   vendorPaths = lib.concatStringsSep " " (map (v: "${v}") vendors);
 
   # Extract git sources from all Cargo.lock files
@@ -56,14 +58,16 @@ let
     in
     map (p: p.source) gitPackages;
 
-  allGitSources = lib.unique (lib.flatten (map (entry:
-    extractGitSources (normalizeCargoLock entry).lockFile
-  ) cargoLocks));
+  allGitSources = lib.unique (lib.flatten (map
+    (entry:
+      extractGitSources (normalizeCargoLock entry).lockFile
+    )
+    cargoLocks));
 
   # URL decode common percent-encoded characters
   urlDecode = s: builtins.replaceStrings
     [ "%2F" "%2f" "%3A" "%3a" "%40" "%20" ]
-    [ "/"   "/"   ":"   ":"   "@"   " "  ]
+    [ "/" "/" ":" ":" "@" " " ]
     s;
 
   # Generate cargo config entries for git sources
@@ -76,10 +80,11 @@ let
       # Extract base URL (without query params) for git field
       baseUrl = builtins.head (lib.splitString "?" (lib.removePrefix "git+" source));
       # Extract query params
-      queryPart = let parts = lib.splitString "?" (lib.removePrefix "git+" source);
-                  in if builtins.length parts > 1
-                     then builtins.head (lib.splitString "#" (builtins.elemAt parts 1))
-                     else "";
+      queryPart =
+        let parts = lib.splitString "?" (lib.removePrefix "git+" source);
+        in if builtins.length parts > 1
+        then builtins.head (lib.splitString "#" (builtins.elemAt parts 1))
+        else "";
       # Parse tag/branch/rev from query (URL-decode the values)
       tagMatch = builtins.match ".*tag=([^&#]+).*" "?${queryPart}";
       branchMatch = builtins.match ".*branch=([^&#]+).*" "?${queryPart}";
@@ -87,7 +92,8 @@ let
       tag = if tagMatch != null then urlDecode (builtins.head tagMatch) else null;
       branch = if branchMatch != null then urlDecode (builtins.head branchMatch) else null;
       rev = if revMatch != null then urlDecode (builtins.head revMatch) else null;
-    in ''
+    in
+    ''
       [source."${sourceKey}"]
       git = "${baseUrl}"
       ${lib.optionalString (tag != null) ''tag = "${tag}"''}
@@ -133,31 +139,31 @@ rustPlatform.buildRustPackage (cleanedArgs // {
   nativeBuildInputs = [ r0vm makeWrapper ] ++ nativeBuildInputs;
 
   preBuild = ''
-    export HOME=$TMPDIR
+        export HOME=$TMPDIR
 
-    # Set up risc0 toolchain in expected location.
-    # We need a wrapper that unsets LD_LIBRARY_PATH because nixpkgs'
-    # buildRustPackage sets it to include nixpkgs rustc libs, which causes
-    # risc0-rust's rustc to detect the wrong sysroot.
-    # See docs/LD_LIBRARY_PATH-sysroot-issue.md for details.
-    mkdir -p $HOME/.risc0/toolchains/${toolchainName}/bin
-    ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
+        # Set up risc0 toolchain in expected location.
+        # We need a wrapper that unsets LD_LIBRARY_PATH because nixpkgs'
+        # buildRustPackage sets it to include nixpkgs rustc libs, which causes
+        # risc0-rust's rustc to detect the wrong sysroot.
+        # See docs/LD_LIBRARY_PATH-sysroot-issue.md for details.
+        mkdir -p $HOME/.risc0/toolchains/${toolchainName}/bin
+        ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
 
-    printf '%s\n' '#!/bin/sh' 'unset LD_LIBRARY_PATH' 'exec ${risc0-rust}/bin/rustc "$@"' \
-      > $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
-    chmod +x $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
+        printf '%s\n' '#!/bin/sh' 'unset LD_LIBRARY_PATH' 'exec ${risc0-rust}/bin/rustc "$@"' \
+          > $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
+        chmod +x $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
 
-    # Create settings.toml with default rust version
-    printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
+        # Create settings.toml with default rust version
+        printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
 
-    # Add git source replacements to cargo config.
-    # buildRustPackage only sets up crates-io replacement, not git sources.
-    cat >> /build/.cargo/config.toml << 'GITCONFIG'
-${gitSourcesConfig}
-GITCONFIG
+        # Add git source replacements to cargo config.
+        # buildRustPackage only sets up crates-io replacement, not git sources.
+        cat >> /build/.cargo/config.toml << 'GITCONFIG'
+    ${gitSourcesConfig}
+    GITCONFIG
 
-    export PATH=${r0vm}/bin:${lld}/bin:$PATH
-    export RISC0_BUILD_LOCKED=1
+        export PATH=${r0vm}/bin:${lld}/bin:$PATH
+        export RISC0_BUILD_LOCKED=1
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''
