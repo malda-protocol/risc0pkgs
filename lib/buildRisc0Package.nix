@@ -174,6 +174,10 @@ rustPlatform.buildRustPackage (cleanedArgs // {
         # Create dummy README.md for crates that use include_str!("../../../README.md")
         # (e.g., risc0-steel references workspace root README from within crates/steel/src)
         echo "# Vendored crate" > /build/README.md
+
+        # NOTE: Cannot use RISC0_BUILD_LOCKED=1 with git dependencies.
+        # Git deps in Cargo.lock have no checksum, but vendoring adds one,
+        # causing cargo --locked to fail due to lockfile modification.
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''
