@@ -5,6 +5,7 @@
 , r0vm
 , risc0-rust
 , lld
+, riscv32-cc
 }:
 
 { pname
@@ -164,6 +165,11 @@ rustPlatform.buildRustPackage (cleanedArgs // {
 
         export PATH=${r0vm}/bin:${lld}/bin:$PATH
         export RISC0_BUILD_LOCKED=1
+
+        # Set C/C++ cross-compiler for guest code (used by cc-rs in build.rs)
+        export CC_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}gcc
+        export CXX_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}g++
+        export AR_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}ar
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''

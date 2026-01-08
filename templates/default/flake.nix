@@ -53,7 +53,7 @@
         in
         {
           default = pkgs.mkShell {
-            nativeBuildInputs = [ pkgs.cargo pkgs.r0vm ];
+            nativeBuildInputs = [ pkgs.cargo pkgs.r0vm pkgs.riscv32-cc ];
 
             shellHook = ''
               # Set up risc0 toolchain in expected location using symlinks.
@@ -63,6 +63,11 @@
 
               # Create settings.toml with default rust version
               printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
+
+              # Set C/C++ cross-compiler for guest code (used by cc-rs in build.rs)
+              export CC_riscv32im_risc0_zkvm_elf=${pkgs.riscv32-cc}/bin/${pkgs.riscv32-cc.targetPrefix}gcc
+              export CXX_riscv32im_risc0_zkvm_elf=${pkgs.riscv32-cc}/bin/${pkgs.riscv32-cc.targetPrefix}g++
+              export AR_riscv32im_risc0_zkvm_elf=${pkgs.riscv32-cc}/bin/${pkgs.riscv32-cc.targetPrefix}ar
             '';
           };
         }
