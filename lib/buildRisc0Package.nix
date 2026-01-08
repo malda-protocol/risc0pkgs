@@ -170,6 +170,10 @@ rustPlatform.buildRustPackage (cleanedArgs // {
         export CC_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}gcc
         export CXX_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}g++
         export AR_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}ar
+
+        # Create dummy README.md for crates that use include_str!("../../../README.md")
+        # (e.g., risc0-steel references workspace root README from within crates/steel/src)
+        echo "# Vendored crate" > /build/README.md
   '' + preBuild;
 
   postInstall = lib.optionalString wrapBinaries ''
