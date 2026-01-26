@@ -6,6 +6,10 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    advisory-db = {
+      url = "github:rustsec/advisory-db";
+      flake = false;
+    };
   };
 
   outputs =
@@ -14,6 +18,7 @@
       nixpkgs,
       risc0pkgs,
       treefmt-nix,
+      advisory-db,
       ...
     }:
     let
@@ -37,6 +42,17 @@
 
       checks = forAllSystems (system: {
         formatting = treefmtEval.${system}.config.build.check self;
+        audit =
+          nixpkgs.legacyPackages.${system}.runCommand "cargo-audit"
+            {
+              buildInputs = [ nixpkgs.legacyPackages.${system}.cargo-audit ];
+            }
+            ''
+              cargo-audit audit --no-fetch --db ${advisory-db} --file ${./Cargo.lock}
+              cargo-audit audit --no-fetch --db ${advisory-db} --file ${./methods/Cargo.lock}
+              cargo-audit audit --no-fetch --db ${advisory-db} --file ${./methods/guest/Cargo.lock}
+              touch $out
+            '';
       });
       packages = forAllSystems (
         system:
