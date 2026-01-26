@@ -1,34 +1,39 @@
-{ lib
-, stdenv
-, rustc-unwrapped
-, fetchurl
-, llvmPackages
+{
+  lib,
+  stdenv,
+  rustc-unwrapped,
+  fetchurl,
+  llvmPackages,
 }:
 
 let
   rustVersion = "1.91.1";
 
   # Map Nix system to Rust target triple
-  hostTarget = {
-    x86_64-linux = "x86_64-unknown-linux-gnu";
-    aarch64-linux = "aarch64-unknown-linux-gnu";
-    x86_64-darwin = "x86_64-apple-darwin";
-    aarch64-darwin = "aarch64-apple-darwin";
-  }.${stdenv.hostPlatform.system};
+  hostTarget =
+    {
+      x86_64-linux = "x86_64-unknown-linux-gnu";
+      aarch64-linux = "aarch64-unknown-linux-gnu";
+      x86_64-darwin = "x86_64-apple-darwin";
+      aarch64-darwin = "aarch64-apple-darwin";
+    }
+    .${stdenv.hostPlatform.system};
 in
 
 rustc-unwrapped.overrideAttrs (oldAttrs: {
   pname = "rustc-risc0";
   version = rustVersion;
 
-  src = (fetchurl {
-    url = "https://static.rust-lang.org/dist/rustc-${rustVersion}-src.tar.gz";
-    sha256 = "sha256-ONziBdOfYVcSYfBEQjehzp7+y5cOdg2OxNlXr1tEVyM=";
-  }) // {
-    # Mark as release tarball to prevent postPatch from trying to mkdir .cargo
-    # (release tarballs already have .cargo directory)
-    passthru.isReleaseTarball = true;
-  };
+  src =
+    (fetchurl {
+      url = "https://static.rust-lang.org/dist/rustc-${rustVersion}-src.tar.gz";
+      sha256 = "sha256-ONziBdOfYVcSYfBEQjehzp7+y5cOdg2OxNlXr1tEVyM=";
+    })
+    // {
+      # Mark as release tarball to prevent postPatch from trying to mkdir .cargo
+      # (release tarballs already have .cargo directory)
+      passthru.isReleaseTarball = true;
+    };
 
   # Apply minor Risc0 patch.
   # This patch is already in upstream Rust 1.92+, but needed for 1.91.1.
@@ -41,20 +46,19 @@ rustc-unwrapped.overrideAttrs (oldAttrs: {
 
   # Override configure flags to build both host and Risc0 zkVM targets.
   # This ensures we have libs for both host (build scripts) and riscv (guest code).
-  configureFlags = (lib.filter
-    (flag:
-      !(lib.hasPrefix "--target=" flag)
-        && flag != "--enable-profiler"  # profiler needs libc
-    )
-    (oldAttrs.configureFlags or [ ])) ++ [
-    "--target=${hostTarget},riscv32im-risc0-zkvm-elf"
-    "--disable-docs" # docs fail on bare-metal target
-    # Use unwrapped clang for RISC-V cross-compilation
-    # (wrapped clang adds hardening flags not supported on RISC-V)
-    "--set=target.riscv32im-risc0-zkvm-elf.cc=${llvmPackages.clang-unwrapped}/bin/clang"
-    "--set=target.riscv32im-risc0-zkvm-elf.cxx=${llvmPackages.clang-unwrapped}/bin/clang++"
-    "--set=target.riscv32im-risc0-zkvm-elf.linker=${llvmPackages.lld}/bin/ld.lld"
-  ];
+  configureFlags =
+    (lib.filter (
+      flag: !(lib.hasPrefix "--target=" flag) && flag != "--enable-profiler" # profiler needs libc
+    ) (oldAttrs.configureFlags or [ ]))
+    ++ [
+      "--target=${hostTarget},riscv32im-risc0-zkvm-elf"
+      "--disable-docs" # docs fail on bare-metal target
+      # Use unwrapped clang for RISC-V cross-compilation
+      # (wrapped clang adds hardening flags not supported on RISC-V)
+      "--set=target.riscv32im-risc0-zkvm-elf.cc=${llvmPackages.clang-unwrapped}/bin/clang"
+      "--set=target.riscv32im-risc0-zkvm-elf.cxx=${llvmPackages.clang-unwrapped}/bin/clang++"
+      "--set=target.riscv32im-risc0-zkvm-elf.linker=${llvmPackages.lld}/bin/ld.lld"
+    ];
 
   # Set RUSTFLAGS for RISC-V zkvm target (required by rzup build process)
   # This handles atomic operations for the RISC-V target

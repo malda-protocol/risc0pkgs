@@ -1,57 +1,60 @@
-{ lib
-, stdenv
-, rustPlatform
-, makeWrapper
-, r0vm
-, risc0-rust
-, lld
-, riscv32-cc
+{
+  lib,
+  stdenv,
+  rustPlatform,
+  makeWrapper,
+  r0vm,
+  risc0-rust,
+  lld,
+  riscv32-cc,
 }:
 
-{ pname
-, version ? "0.1.0"
-, src
-, cargoLocks ? [ ]  # List of { lockFile, outputHashes? } or just paths
-, nativeBuildInputs ? [ ]
-, preBuild ? ""
-, postInstall ? ""
-, wrapBinaries ? true
-, ...
+{
+  pname,
+  version ? "0.1.0",
+  src,
+  cargoLocks ? [ ], # List of { lockFile, outputHashes? } or just paths
+  nativeBuildInputs ? [ ],
+  preBuild ? "",
+  postInstall ? "",
+  wrapBinaries ? true,
+  ...
 }@args:
 
 let
   # Extract rust version from risc0-rust version (e.g., "r0.1.91.1" -> "1.91.1")
   rustVersion = lib.removePrefix "r0." risc0-rust.version;
 
-  arch = {
-    x86_64-linux = "x86_64-unknown-linux-gnu";
-    aarch64-linux = "aarch64-unknown-linux-gnu";
-    aarch64-darwin = "aarch64-apple-darwin";
-    x86_64-darwin = "x86_64-apple-darwin";
-  }.${stdenv.hostPlatform.system};
+  arch =
+    {
+      x86_64-linux = "x86_64-unknown-linux-gnu";
+      aarch64-linux = "aarch64-unknown-linux-gnu";
+      aarch64-darwin = "aarch64-apple-darwin";
+      x86_64-darwin = "x86_64-apple-darwin";
+    }
+    .${stdenv.hostPlatform.system};
 
   toolchainName = "v${rustVersion}-rust-${arch}";
 
   # Create combined vendor from all lock files
   # Each entry can be a path or { lockFile, outputHashes? }
-  normalizeCargoLock = entry:
-    if builtins.isAttrs entry
-    then entry
-    else { lockFile = entry; };
+  normalizeCargoLock = entry: if builtins.isAttrs entry then entry else { lockFile = entry; };
 
-  vendors = map
-    (entry:
-      let normalized = normalizeCargoLock entry;
-      in rustPlatform.importCargoLock {
-        lockFile = normalized.lockFile;
-        outputHashes = normalized.outputHashes or { };
-      }
-    )
-    cargoLocks;
+  vendors = map (
+    entry:
+    let
+      normalized = normalizeCargoLock entry;
+    in
+    rustPlatform.importCargoLock {
+      lockFile = normalized.lockFile;
+      outputHashes = normalized.outputHashes or { };
+    }
+  ) cargoLocks;
   vendorPaths = lib.concatStringsSep " " (map (v: "${v}") vendors);
 
   # Extract git sources from all Cargo.lock files
-  extractGitSources = lockFile:
+  extractGitSources =
+    lockFile:
     let
       lock = builtins.fromTOML (builtins.readFile lockFile);
       packages = lock.package or [ ];
@@ -59,22 +62,19 @@ let
     in
     map (p: p.source) gitPackages;
 
-  allGitSources = lib.unique (lib.flatten (map
-    (entry:
-      extractGitSources (normalizeCargoLock entry).lockFile
-    )
-    cargoLocks));
+  allGitSources = lib.unique (
+    lib.flatten (map (entry: extractGitSources (normalizeCargoLock entry).lockFile) cargoLocks)
+  );
 
   # URL decode common percent-encoded characters
-  urlDecode = s: builtins.replaceStrings
-    [ "%2F" "%2f" "%3A" "%3a" "%40" "%20" ]
-    [ "/" "/" ":" ":" "@" " " ]
-    s;
+  urlDecode =
+    s: builtins.replaceStrings [ "%2F" "%2f" "%3A" "%3a" "%40" "%20" ] [ "/" "/" ":" ":" "@" " " ] s;
 
   # Generate cargo config entries for git sources
   # source = "git+https://github.com/foo/bar?tag=v1.0#commit"
   # -> [source."git+https://github.com/foo/bar?tag=v1.0"]
-  gitSourceToConfig = source:
+  gitSourceToConfig =
+    source:
     let
       # Remove the #commit suffix for the source key
       sourceKey = builtins.head (lib.splitString "#" source);
@@ -82,10 +82,13 @@ let
       baseUrl = builtins.head (lib.splitString "?" (lib.removePrefix "git+" source));
       # Extract query params
       queryPart =
-        let parts = lib.splitString "?" (lib.removePrefix "git+" source);
-        in if builtins.length parts > 1
-        then builtins.head (lib.splitString "#" (builtins.elemAt parts 1))
-        else "";
+        let
+          parts = lib.splitString "?" (lib.removePrefix "git+" source);
+        in
+        if builtins.length parts > 1 then
+          builtins.head (lib.splitString "#" (builtins.elemAt parts 1))
+        else
+          "";
       # Parse tag/branch/rev from query (URL-decode the values)
       tagMatch = builtins.match ".*tag=([^&#]+).*" "?${queryPart}";
       branchMatch = builtins.match ".*branch=([^&#]+).*" "?${queryPart}";
@@ -132,59 +135,74 @@ let
   ];
 in
 
-rustPlatform.buildRustPackage (cleanedArgs // {
-  inherit pname version src;
+rustPlatform.buildRustPackage (
+  cleanedArgs
+  // {
+    inherit pname version src;
 
-  cargoDeps = combinedVendor;
+    cargoDeps = combinedVendor;
 
-  nativeBuildInputs = [ r0vm makeWrapper ] ++ nativeBuildInputs;
+    nativeBuildInputs = [
+      r0vm
+      makeWrapper
+    ]
+    ++ nativeBuildInputs;
 
-  preBuild = ''
-        export HOME=$TMPDIR
+    preBuild = ''
+          export HOME=$TMPDIR
 
-        # Set up risc0 toolchain in expected location.
-        # We need a wrapper that unsets LD_LIBRARY_PATH because nixpkgs'
-        # buildRustPackage sets it to include nixpkgs rustc libs, which causes
-        # risc0-rust's rustc to detect the wrong sysroot.
-        # See docs/LD_LIBRARY_PATH-sysroot-issue.md for details.
-        mkdir -p $HOME/.risc0/toolchains/${toolchainName}/bin
-        ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
+          # Set up risc0 toolchain in expected location.
+          # We need a wrapper that unsets LD_LIBRARY_PATH because nixpkgs'
+          # buildRustPackage sets it to include nixpkgs rustc libs, which causes
+          # risc0-rust's rustc to detect the wrong sysroot.
+          # See docs/LD_LIBRARY_PATH-sysroot-issue.md for details.
+          mkdir -p $HOME/.risc0/toolchains/${toolchainName}/bin
+          ln -s ${risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
 
-        printf '%s\n' '#!/bin/sh' 'unset LD_LIBRARY_PATH' 'exec ${risc0-rust}/bin/rustc "$@"' \
-          > $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
-        chmod +x $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
+          printf '%s\n' '#!/bin/sh' 'unset LD_LIBRARY_PATH' 'exec ${risc0-rust}/bin/rustc "$@"' \
+            > $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
+          chmod +x $HOME/.risc0/toolchains/${toolchainName}/bin/rustc
 
-        # Create settings.toml with default rust version
-        printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
+          # Create settings.toml with default rust version
+          printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
 
-        # Add git source replacements to cargo config.
-        # buildRustPackage only sets up crates-io replacement, not git sources.
-        cat >> /build/.cargo/config.toml << 'GITCONFIG'
-    ${gitSourcesConfig}
-    GITCONFIG
+          # Add git source replacements to cargo config.
+          # buildRustPackage only sets up crates-io replacement, not git sources.
+          cat >> /build/.cargo/config.toml << 'GITCONFIG'
+      ${gitSourcesConfig}
+      GITCONFIG
 
-        export PATH=${r0vm}/bin:${lld}/bin:$PATH
-        export RISC0_BUILD_LOCKED=1
+          export PATH=${r0vm}/bin:${lld}/bin:$PATH
+          export RISC0_BUILD_LOCKED=1
 
-        # Set C/C++ cross-compiler for guest code (used by cc-rs in build.rs)
-        export CC_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}gcc
-        export CXX_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}g++
-        export AR_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}ar
+          # Set C/C++ cross-compiler for guest code (used by cc-rs in build.rs)
+          export CC_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}gcc
+          export CXX_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}g++
+          export AR_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}ar
 
-        # Create dummy README.md for crates that use include_str!("../../../README.md")
-        # (e.g., risc0-steel references workspace root README from within crates/steel/src)
-        echo "# Vendored crate" > /build/README.md
-  '' + preBuild;
+          # Create dummy README.md for crates that use include_str!("../../../README.md")
+          # (e.g., risc0-steel references workspace root README from within crates/steel/src)
+          echo "# Vendored crate" > /build/README.md
+    ''
+    + preBuild;
 
-  postInstall = lib.optionalString wrapBinaries ''
-    for exe in $out/bin/*; do
-      wrapProgram "$exe" --prefix PATH : ${r0vm}/bin
-    done
-  '' + postInstall;
+    postInstall =
+      lib.optionalString wrapBinaries ''
+        for exe in $out/bin/*; do
+          wrapProgram "$exe" --prefix PATH : ${r0vm}/bin
+        done
+      ''
+      + postInstall;
 
-  doCheck = false;
+    doCheck = false;
 
-  passthru = {
-    inherit r0vm risc0-rust rustVersion toolchainName;
-  };
-})
+    passthru = {
+      inherit
+        r0vm
+        risc0-rust
+        rustVersion
+        toolchainName
+        ;
+    };
+  }
+)

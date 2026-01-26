@@ -1,12 +1,16 @@
-{ lib
-, stdenv
-, callPackage
-, forceFromSource ? false
+{
+  lib,
+  stdenv,
+  callPackage,
+  forceFromSource ? false,
 }:
 
 let
   # Platforms with prebuilt binaries available
-  prebuiltPlatforms = [ "x86_64-linux" "aarch64-darwin" ];
+  prebuiltPlatforms = [
+    "x86_64-linux"
+    "aarch64-darwin"
+  ];
 
   hasPrebuilt = builtins.elem stdenv.hostPlatform.system prebuiltPlatforms;
 
@@ -16,9 +20,10 @@ let
   fromSource = callPackage ./from-source.nix { };
 
   selectedPackage =
-    if usePrebuilt
-    then prebuilt
-    else lib.warn "risc0-rust: Building Rust toolchain from source. This will take a long time (1+ hours)." fromSource;
+    if usePrebuilt then
+      prebuilt
+    else
+      lib.warn "risc0-rust: Building Rust toolchain from source. This will take a long time (1+ hours)." fromSource;
 in
 selectedPackage.overrideAttrs (old: {
   passthru = (old.passthru or { }) // {

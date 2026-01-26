@@ -1,12 +1,16 @@
-{ lib
-, stdenv
-, callPackage
-, forceFromSource ? false
+{
+  lib,
+  stdenv,
+  callPackage,
+  forceFromSource ? false,
 }:
 
 let
   # Platforms with prebuilt binaries available
-  prebuiltPlatforms = [ "x86_64-linux" "aarch64-darwin" ];
+  prebuiltPlatforms = [
+    "x86_64-linux"
+    "aarch64-darwin"
+  ];
 
   hasPrebuilt = builtins.elem stdenv.hostPlatform.system prebuiltPlatforms;
 

@@ -1,8 +1,9 @@
-{ lib
-, stdenv
-, fetchurl
-, autoPatchelfHook
-, zlib
+{
+  lib,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
+  zlib,
 }:
 
 stdenv.mkDerivation rec {
@@ -21,7 +22,8 @@ stdenv.mkDerivation rec {
         url = "https://github.com/risc0/rust/releases/download/${version}/rust-toolchain-aarch64-apple-darwin.tar.gz";
         hash = "sha256-U8t7yy5awhooOtTf/JRCIIBq0V4RQdoYHRNfrB7ypOQ=";
       };
-    }.${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}")
+    }
+    .${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}")
   );
 
   sourceRoot = ".";
@@ -56,6 +58,9 @@ stdenv.mkDerivation rec {
   meta = with lib; {
     description = "RISC Zero Rust toolchain (prebuilt binary)";
     homepage = "https://github.com/risc0/rust";
-    platforms = [ "x86_64-linux" "aarch64-darwin" ];
+    platforms = [
+      "x86_64-linux"
+      "aarch64-darwin"
+    ];
   };
 }

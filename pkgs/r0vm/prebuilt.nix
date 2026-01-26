@@ -1,7 +1,8 @@
-{ lib
-, stdenv
-, fetchurl
-, autoPatchelfHook
+{
+  lib,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -19,7 +20,8 @@ stdenv.mkDerivation (finalAttrs: {
         url = "https://github.com/risc0/risc0/releases/download/v${finalAttrs.version}/cargo-risczero-aarch64-apple-darwin.tgz";
         hash = "sha256-9tSEbVzWouUWUFm1ZvmjH4eVgrwlNLlQFan0BNObGHU=";
       };
-    }.${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}")
+    }
+    .${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}")
   );
 
   sourceRoot = ".";
@@ -53,6 +55,9 @@ stdenv.mkDerivation (finalAttrs: {
   meta = with lib; {
     description = "RISC Zero zkVM (prebuilt binary)";
     homepage = "https://github.com/risc0/risc0";
-    platforms = [ "x86_64-linux" "aarch64-darwin" ];
+    platforms = [
+      "x86_64-linux"
+      "aarch64-darwin"
+    ];
   };
 })
