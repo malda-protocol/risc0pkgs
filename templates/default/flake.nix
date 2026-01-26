@@ -2,13 +2,37 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     risc0pkgs.url = "github:malda-protocol/risc0pkgs";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, risc0pkgs, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      risc0pkgs,
+      treefmt-nix,
+      ...
+    }:
     let
       forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      treefmtEval = forAllSystems (
+        system:
+        treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+          programs.rustfmt.enable = true;
+        }
+      );
     in
     {
+      formatter = forAllSystems (system: treefmtEval.${system}.config.build.wrapper);
+
+      checks = forAllSystems (system: {
+        formatting = treefmtEval.${system}.config.build.check self;
+      });
       packages = forAllSystems (system:
         let
           pkgs = import nixpkgs {
