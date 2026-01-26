@@ -48,9 +48,13 @@
               buildInputs = [ nixpkgs.legacyPackages.${system}.cargo-audit ];
             }
             ''
-              cargo-audit audit --no-fetch --db ${advisory-db} --file ${./Cargo.lock}
-              cargo-audit audit --no-fetch --db ${advisory-db} --file ${./methods/Cargo.lock}
-              cargo-audit audit --no-fetch --db ${advisory-db} --file ${./methods/guest/Cargo.lock}
+              # NOTE: RUSTSEC-2023-0071 (rsa) and RUSTSEC-2025-0055 (tracing-subscriber)
+              # are transitive dependencies from risc0-zkvm/risc0-build packages
+              # that cannot be fixed from the template side.
+              IGNORE="--ignore RUSTSEC-2023-0071 --ignore RUSTSEC-2025-0055"
+              cargo-audit audit --no-fetch $IGNORE --db ${advisory-db} --file ${./Cargo.lock}
+              cargo-audit audit --no-fetch $IGNORE --db ${advisory-db} --file ${./methods/Cargo.lock}
+              cargo-audit audit --no-fetch $IGNORE --db ${advisory-db} --file ${./methods/guest/Cargo.lock}
               touch $out
             '';
       });
