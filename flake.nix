@@ -74,7 +74,7 @@
 
         checks.format = pkgs.runCommand "format-check" { buildInputs = [ pkgs.nixfmt-tree ]; } ''
           cd ${self}
-          nixfmt-tree --check
+          treefmt --ci
           touch $out
         '';
       }
