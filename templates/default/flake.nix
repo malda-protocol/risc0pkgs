@@ -17,7 +17,12 @@
       ...
     }:
     let
-      forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      forAllSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
       treefmtEval = forAllSystems (
         system:
         treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} {
@@ -33,7 +38,8 @@
       checks = forAllSystems (system: {
         formatting = treefmtEval.${system}.config.build.check self;
       });
-      packages = forAllSystems (system:
+      packages = forAllSystems (
+        system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -61,7 +67,8 @@
         }
       );
 
-      devShells = forAllSystems (system:
+      devShells = forAllSystems (
+        system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -69,17 +76,23 @@
           };
 
           rustVersion = pkgs.lib.removePrefix "r0." pkgs.risc0-rust.version;
-          arch = {
-            x86_64-linux = "x86_64-unknown-linux-gnu";
-            aarch64-linux = "aarch64-unknown-linux-gnu";
-            aarch64-darwin = "aarch64-apple-darwin";
-            x86_64-darwin = "x86_64-apple-darwin";
-          }.${system};
+          arch =
+            {
+              x86_64-linux = "x86_64-unknown-linux-gnu";
+              aarch64-linux = "aarch64-unknown-linux-gnu";
+              aarch64-darwin = "aarch64-apple-darwin";
+              x86_64-darwin = "x86_64-apple-darwin";
+            }
+            .${system};
           toolchainName = "v${rustVersion}-rust-${arch}";
         in
         {
           default = pkgs.mkShell {
-            nativeBuildInputs = [ pkgs.cargo pkgs.r0vm pkgs.riscv32-cc ];
+            nativeBuildInputs = [
+              pkgs.cargo
+              pkgs.r0vm
+              pkgs.riscv32-cc
+            ];
 
             shellHook = ''
               # Set up risc0 toolchain in expected location using symlinks.
