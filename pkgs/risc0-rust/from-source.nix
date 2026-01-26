@@ -2,13 +2,10 @@
   lib,
   stdenv,
   rustc-unwrapped,
-  fetchurl,
   llvmPackages,
 }:
 
 let
-  rustVersion = "1.91.1";
-
   # Map Nix system to Rust target triple
   hostTarget =
     {
@@ -20,29 +17,10 @@ let
     .${stdenv.hostPlatform.system};
 in
 
+# Use nixpkgs' rustc source and patches as-is, just add the risc0 zkVM target.
+# The risc0-specific changes (previously patched for 1.91.1) are upstream since Rust 1.92.
 rustc-unwrapped.overrideAttrs (oldAttrs: {
   pname = "rustc-risc0";
-  version = rustVersion;
-
-  src =
-    (fetchurl {
-      url = "https://static.rust-lang.org/dist/rustc-${rustVersion}-src.tar.gz";
-      sha256 = "sha256-ONziBdOfYVcSYfBEQjehzp7+y5cOdg2OxNlXr1tEVyM=";
-    })
-    // {
-      # Mark as release tarball to prevent postPatch from trying to mkdir .cargo
-      # (release tarballs already have .cargo directory)
-      passthru.isReleaseTarball = true;
-    };
-
-  # Apply minor Risc0 patch.
-  # This patch is already in upstream Rust 1.92+, but needed for 1.91.1.
-  patches = (oldAttrs.patches or [ ]) ++ [
-    (fetchurl {
-      url = "https://github.com/risc0/rust/commit/235d917b7e34d48f85cacf2bd331e2899c7ee42a.patch";
-      sha256 = "sha256-bEh9YTjBrGCXIquwCwFRC3j8W+SU3zOX6gH8yQ8GQYk=";
-    })
-  ];
 
   # Override configure flags to build both host and Risc0 zkVM targets.
   # This ensures we have libs for both host (build scripts) and riscv (guest code).
