@@ -140,6 +140,11 @@ rustPlatform.buildRustPackage (
   // {
     inherit pname version src;
 
+    # Disable cargo-auditable wrapping. It sets RUSTC=cargo-auditable, which
+    # breaks risc0's guest build: the inner cargo invokes it directly as
+    # `cargo-auditable rustc -vV` and cargo-auditable rejects that usage.
+    auditable = false;
+
     cargoDeps = combinedVendor;
 
     nativeBuildInputs = [
