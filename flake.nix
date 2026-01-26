@@ -59,12 +59,11 @@
           inherit (pkgs) r0vm risc0-rust;
         };
 
-        formatter = pkgs.nixpkgs-fmt;
+        formatter = pkgs.nixfmt-rfc-style;
 
-        checks.format = pkgs.runCommand "format-check" { buildInputs = [ pkgs.nixpkgs-fmt ]; } ''
+        checks.format = pkgs.runCommand "format-check" { buildInputs = [ pkgs.nixfmt-rfc-style ]; } ''
           set -euo pipefail
-          cd ${self}
-          nixpkgs-fmt --check .
+          find ${self} -name '*.nix' -exec nixfmt --check {} +
           touch $out
         '';
       });
