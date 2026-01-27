@@ -84,6 +84,19 @@
               }
             ];
           };
+
+          guest = pkgs.buildRisc0Guest {
+            pname = "multiply";
+            src = ./methods/guest;
+            cargoLock = {
+              lockFile = ./methods/guest/Cargo.lock;
+              outputHashes = {
+                "base64-0.10.0" = "sha256-0NSljIX/yIt1dS+bq6i3DyeW82SosrScnH+/yTCMLII=";
+                "risc0-steel-2.4.1" = "sha256-fFsds95M8u2jjfFZ+M3AuX3CzwKG3XYsLgk0Bk32ras=";
+                "c-kzg-2.1.5" = "sha256-wlmTH0kGGYlVqlFetAMTkI0wQ/8n8uTx8baYgbQuAN4=";
+              };
+            };
+          };
         }
       );
 
