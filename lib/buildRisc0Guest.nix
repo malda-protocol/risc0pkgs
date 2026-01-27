@@ -106,15 +106,15 @@ risc0RustPlatform.buildRustPackage (
     '';
 
     preBuild = ''
-          # Set C/C++ cross-compiler for guest code (used by cc-rs in build.rs)
-          export CC_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}gcc
-          export CXX_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}g++
-          export AR_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}ar
+      # Set C/C++ cross-compiler for guest code (used by cc-rs in build.rs)
+      export CC_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}gcc
+      export CXX_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}g++
+      export AR_riscv32im_risc0_zkvm_elf=${riscv32-cc}/bin/${riscv32-cc.targetPrefix}ar
 
-          export PATH=${lld}/bin:$PATH
+      export PATH=${lld}/bin:$PATH
 
-          # Create dummy README.md for crates that use include_str!("../../../README.md")
-          echo "# Vendored crate" > /build/README.md
+      # Create dummy README.md for crates that use include_str!("../../../README.md")
+      echo "# Vendored crate" > /build/README.md
     ''
     + preBuild;
 

@@ -36,24 +36,44 @@ let
     hex:
     let
       hexChars = {
-        "0" = 0; "1" = 1; "2" = 2; "3" = 3;
-        "4" = 4; "5" = 5; "6" = 6; "7" = 7;
-        "8" = 8; "9" = 9;
-        "a" = 10; "b" = 11; "c" = 12; "d" = 13; "e" = 14; "f" = 15;
-        "A" = 10; "B" = 11; "C" = 12; "D" = 13; "E" = 14; "F" = 15;
+        "0" = 0;
+        "1" = 1;
+        "2" = 2;
+        "3" = 3;
+        "4" = 4;
+        "5" = 5;
+        "6" = 6;
+        "7" = 7;
+        "8" = 8;
+        "9" = 9;
+        "a" = 10;
+        "b" = 11;
+        "c" = 12;
+        "d" = 13;
+        "e" = 14;
+        "f" = 15;
+        "A" = 10;
+        "B" = 11;
+        "C" = 12;
+        "D" = 13;
+        "E" = 14;
+        "F" = 15;
       };
       chars = lib.genList (i: builtins.substring i 1 hex) (builtins.stringLength hex);
     in
     lib.foldl (acc: c: acc * 16 + hexChars.${c}) 0 chars;
 
-  guestConstants = guest:
+  guestConstants =
+    guest:
     let
       bins = builtins.attrNames (
-        lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".bin" name)
-          (builtins.readDir "${guest}/bin")
+        lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".bin" name) (
+          builtins.readDir "${guest}/bin"
+        )
       );
     in
-    map (binFile:
+    map (
+      binFile:
       let
         baseName = lib.removeSuffix ".bin" binFile;
         upper = lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] baseName);
@@ -69,8 +89,9 @@ let
       ''
     ) bins;
 
-  generatedMethodsRs = writeText "methods.rs"
-    (lib.concatStringsSep "\n" (lib.flatten (map guestConstants guests')));
+  generatedMethodsRs = writeText "methods.rs" (
+    lib.concatStringsSep "\n" (lib.flatten (map guestConstants guests'))
+  );
 
   cleanedArgs = builtins.removeAttrs args [
     "cargoLock"
@@ -93,23 +114,23 @@ rustPlatform.buildRustPackage (
 
     nativeBuildInputs = [
       makeWrapper
-    ] ++ nativeBuildInputs;
+    ]
+    ++ nativeBuildInputs;
 
-    preBuild =
-      ''
-        # Replace methods/build.rs to copy our pre-generated methods.rs
-        # instead of invoking risc0_build::embed_methods().
-        cat > ${methodsDir}/build.rs << 'BUILDRS'
-        fn main() {
-            let out_dir = std::env::var("OUT_DIR").unwrap();
-            std::fs::copy(
-                "${generatedMethodsRs}",
-                format!("{out_dir}/methods.rs"),
-            ).unwrap();
-        }
-        BUILDRS
-      ''
-      + preBuild;
+    preBuild = ''
+      # Replace methods/build.rs to copy our pre-generated methods.rs
+      # instead of invoking risc0_build::embed_methods().
+      cat > ${methodsDir}/build.rs << 'BUILDRS'
+      fn main() {
+          let out_dir = std::env::var("OUT_DIR").unwrap();
+          std::fs::copy(
+              "${generatedMethodsRs}",
+              format!("{out_dir}/methods.rs"),
+          ).unwrap();
+      }
+      BUILDRS
+    ''
+    + preBuild;
 
     postInstall =
       lib.optionalString wrapBinaries ''
