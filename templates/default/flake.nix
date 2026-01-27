@@ -2,6 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     risc0pkgs.url = "github:malda-protocol/risc0pkgs";
+    risc0pkgs.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
