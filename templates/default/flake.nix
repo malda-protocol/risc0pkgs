@@ -97,6 +97,13 @@
               };
             };
           };
+
+          host = pkgs.buildRisc0Host {
+            pname = "hello-world";
+            src = ./.;
+            cargoLock = ./Cargo.lock;
+            guests = [ self.packages.${system}.guest ];
+          };
         }
       );
 

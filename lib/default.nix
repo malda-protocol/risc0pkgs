@@ -8,5 +8,8 @@ lib.makeScope pkgs.newScope (
     buildRisc0Guest = callPackage ./buildRisc0Guest.nix {
       inherit (pkgs) r0vm risc0-rust;
     };
+    buildRisc0Host = callPackage ./buildRisc0Host.nix {
+      inherit (pkgs) r0vm;
+    };
   }
 )

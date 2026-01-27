@@ -7,4 +7,5 @@ final: prev: {
 
   buildRisc0Package = final.callPackage ./lib/buildRisc0Package.nix { };
   buildRisc0Guest = final.callPackage ./lib/buildRisc0Guest.nix { };
+  buildRisc0Host = final.callPackage ./lib/buildRisc0Host.nix { };
 }
