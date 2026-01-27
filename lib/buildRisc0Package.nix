@@ -14,6 +14,7 @@
   version ? "0.1.0",
   src,
   cargoLocks ? [ ], # List of { lockFile, outputHashes? } or just paths
+  guestCargoLocks ? [ ], # List of { lockFile, outputHashes?, configDir } for guest builds
   nativeBuildInputs ? [ ],
   preBuild ? "",
   postInstall ? "",
@@ -52,6 +53,19 @@ let
   ) cargoLocks;
   vendorPaths = lib.concatStringsSep " " (map (v: "${v}") vendors);
 
+  # Guest vendors (from guestCargoLocks)
+  guestVendors = map (
+    entry:
+    let
+      normalized = normalizeCargoLock entry;
+    in
+    rustPlatform.importCargoLock {
+      lockFile = normalized.lockFile;
+      outputHashes = normalized.outputHashes or { };
+    }
+  ) guestCargoLocks;
+  guestVendorPaths = lib.concatStringsSep " " (map (v: "${v}") guestVendors);
+
   # Extract git sources from all Cargo.lock files
   extractGitSources =
     lockFile:
@@ -64,6 +78,10 @@ let
 
   allGitSources = lib.unique (
     lib.flatten (map (entry: extractGitSources (normalizeCargoLock entry).lockFile) cargoLocks)
+  );
+
+  guestGitSources = lib.unique (
+    lib.flatten (map (entry: extractGitSources (normalizeCargoLock entry).lockFile) guestCargoLocks)
   );
 
   # URL decode common percent-encoded characters
@@ -107,6 +125,7 @@ let
     '';
 
   gitSourcesConfig = lib.concatStringsSep "\n" (map gitSourceToConfig allGitSources);
+  guestGitSourcesConfig = lib.concatStringsSep "\n" (map gitSourceToConfig guestGitSources);
 
   combinedVendor = stdenv.mkDerivation {
     name = "${pname}-combined-cargo-vendor";
@@ -125,9 +144,54 @@ let
     '';
   };
 
+  guestVendor = stdenv.mkDerivation {
+    name = "${pname}-guest-cargo-vendor";
+    phases = [ "installPhase" ];
+
+    installPhase = ''
+      mkdir -p $out
+      for vendor in ${guestVendorPaths}; do
+        for crate in $vendor/*; do
+          name=$(basename $crate)
+          if [ ! -e "$out/$name" ]; then
+            cp -r $crate $out/
+          fi
+        done
+      done
+    '';
+  };
+
+  guestConfigDirs = lib.filter (d: d != null) (
+    map (entry: (normalizeCargoLock entry).configDir or null) guestCargoLocks
+  );
+
+  guestCargoConfigContent =
+    "[source.crates-io]\n"
+    + "replace-with = \"vendored-sources\"\n"
+    + "\n"
+    + "[source.vendored-sources]\n"
+    + "directory = \"/build/guest-vendor\"\n"
+    + lib.optionalString (guestGitSourcesConfig != "") "\n${guestGitSourcesConfig}";
+
+  # Copy guest vendor into /build/ with dereferenced symlinks so that
+  # relative include_str! paths (e.g., "../../../README.md") resolve
+  # within /build/ where README.md already exists.
+  guestCargoConfigScript =
+    lib.optionalString (guestConfigDirs != [ ]) (
+      "cp -rL ${guestVendor} /build/guest-vendor\n"
+    )
+    + lib.concatMapStrings (
+      configDir:
+      "mkdir -p ${configDir}/.cargo\n"
+      + "cat > ${configDir}/.cargo/config.toml << 'GUESTCARGOCONFIG'\n"
+      + guestCargoConfigContent
+      + "GUESTCARGOCONFIG\n"
+    ) guestConfigDirs;
+
   # Remove custom args that shouldn't be passed to buildRustPackage
   cleanedArgs = builtins.removeAttrs args [
     "cargoLocks"
+    "guestCargoLocks"
     "nativeBuildInputs"
     "preBuild"
     "postInstall"
@@ -177,6 +241,7 @@ rustPlatform.buildRustPackage (
       ${gitSourcesConfig}
       GITCONFIG
 
+      ${guestCargoConfigScript}
           export PATH=${r0vm}/bin:${lld}/bin:$PATH
           export RISC0_BUILD_LOCKED=1
 
