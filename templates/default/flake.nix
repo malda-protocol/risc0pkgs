@@ -74,8 +74,11 @@
             cargoLocks = [
               ./Cargo.lock
               ./methods/Cargo.lock
+            ];
+            guestCargoLocks = [
               {
                 lockFile = ./methods/guest/Cargo.lock;
+                configDir = "methods";
                 outputHashes = {
                   "base64-0.10.0" = "sha256-0NSljIX/yIt1dS+bq6i3DyeW82SosrScnH+/yTCMLII=";
                   "risc0-steel-2.4.1" = "sha256-fFsds95M8u2jjfFZ+M3AuX3CzwKG3XYsLgk0Bk32ras=";
