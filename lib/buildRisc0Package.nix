@@ -183,9 +183,7 @@ let
   # relative include_str! paths (e.g., "../../../README.md") resolve
   # within /build/ where README.md already exists.
   guestCargoConfigScript =
-    lib.optionalString (guestConfigDirs != [ ]) (
-      "cp -rL ${guestVendor} /build/guest-vendor\n"
-    )
+    lib.optionalString (guestConfigDirs != [ ]) ("cp -rL ${guestVendor} /build/guest-vendor\n")
     + lib.concatMapStrings (
       configDir:
       "mkdir -p ${configDir}/.cargo\n"
