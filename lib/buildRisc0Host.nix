@@ -4,6 +4,7 @@
   r0vm,
   makeWrapper,
   writeText,
+  fetchgit,
 }:
 
 {
@@ -25,7 +26,12 @@ let
 
   normalizedLock = if builtins.isAttrs cargoLock then cargoLock else { lockFile = cargoLock; };
 
-  vendor = rustPlatform.importCargoLock {
+  # Override importCargoLock to fetch git submodules, matching cargo's behavior.
+  importCargoLock = rustPlatform.importCargoLock.override {
+    fetchgit = args: fetchgit (args // { fetchSubmodules = true; });
+  };
+
+  vendor = importCargoLock {
     lockFile = normalizedLock.lockFile;
     outputHashes = normalizedLock.outputHashes or { };
   };

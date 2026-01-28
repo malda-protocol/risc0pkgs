@@ -7,6 +7,7 @@
   risc0-rust,
   lld,
   riscv32-cc,
+  fetchgit,
 }:
 
 {
@@ -40,12 +41,17 @@ let
   # Each entry can be a path or { lockFile, outputHashes? }
   normalizeCargoLock = entry: if builtins.isAttrs entry then entry else { lockFile = entry; };
 
+  # Override importCargoLock to fetch git submodules, matching cargo's behavior.
+  importCargoLock = rustPlatform.importCargoLock.override {
+    fetchgit = args: fetchgit (args // { fetchSubmodules = true; });
+  };
+
   vendors = map (
     entry:
     let
       normalized = normalizeCargoLock entry;
     in
-    rustPlatform.importCargoLock {
+    importCargoLock {
       lockFile = normalized.lockFile;
       outputHashes = normalized.outputHashes or { };
     }

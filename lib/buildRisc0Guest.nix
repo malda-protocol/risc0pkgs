@@ -9,6 +9,7 @@
   lld,
   riscv32-cc,
   fetchurl,
+  fetchgit,
 }:
 
 let
@@ -44,7 +45,12 @@ let
   # Normalize cargoLock to { lockFile, outputHashes? }
   normalizedLock = if builtins.isAttrs cargoLock then cargoLock else { lockFile = cargoLock; };
 
-  vendor = risc0RustPlatform.importCargoLock {
+  # Override importCargoLock to fetch git submodules, matching cargo's behavior.
+  importCargoLock = risc0RustPlatform.importCargoLock.override {
+    fetchgit = args: fetchgit (args // { fetchSubmodules = true; });
+  };
+
+  vendor = importCargoLock {
     lockFile = normalizedLock.lockFile;
     outputHashes = normalizedLock.outputHashes or { };
   };
