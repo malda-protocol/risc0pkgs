@@ -29,5 +29,8 @@ selectedPackage.overrideAttrs (old: {
   passthru = (old.passthru or { }) // {
     inherit prebuilt fromSource;
     isPrebuilt = usePrebuilt;
+    # Required by nixpkgs' buildRustPackage (rustc.targetPlatforms)
+    targetPlatforms = old.meta.platforms or lib.platforms.all;
+    badTargetPlatforms = [ ];
   };
 })
