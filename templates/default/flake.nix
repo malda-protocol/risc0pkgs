@@ -68,22 +68,11 @@
           };
         in
         {
-          default = pkgs.buildRisc0Package {
+          default = pkgs.buildRisc0Host {
             pname = "hello-world";
-            version = "0.1.0";
             src = ./.;
-            cargoLocks = [
-              ./Cargo.lock
-              ./methods/Cargo.lock
-              {
-                lockFile = ./methods/guest/Cargo.lock;
-                outputHashes = {
-                  "base64-0.10.0" = "sha256-0NSljIX/yIt1dS+bq6i3DyeW82SosrScnH+/yTCMLII=";
-                  "risc0-steel-2.4.1" = "sha256-fFsds95M8u2jjfFZ+M3AuX3CzwKG3XYsLgk0Bk32ras=";
-                  "c-kzg-2.1.5" = "sha256-wlmTH0kGGYlVqlFetAMTkI0wQ/8n8uTx8baYgbQuAN4=";
-                };
-              }
-            ];
+            cargoLock = ./Cargo.lock;
+            guests = [ self.packages.${system}.guest ];
           };
 
           guest = pkgs.buildRisc0Guest {
@@ -99,12 +88,6 @@
             };
           };
 
-          host = pkgs.buildRisc0Host {
-            pname = "hello-world";
-            src = ./.;
-            cargoLock = ./Cargo.lock;
-            guests = [ self.packages.${system}.guest ];
-          };
         }
       );
 
