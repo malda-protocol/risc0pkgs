@@ -86,7 +86,16 @@ let
         binPath = "${guest}/bin/${binFile}";
         idHex = lib.removeSuffix "\n" (builtins.readFile "${guest}/bin/${baseName}.id");
         chunks = lib.genList (i: builtins.substring (i * 8) 8 idHex) 8;
-        idArray = lib.concatStringsSep ", " (map (c: toString (hexToDecimal c)) chunks);
+        # risc0's Digest::from_hex does bytemuck::cast from [u8;32] to [u32;8],
+        # which on little-endian reverses bytes within each u32.
+        # e.g. hex "8dedec2e" → bytes [8d,ed,ec,2e] → LE u32 0x2eeced8d
+        reverseBytes =
+          chunk:
+          let
+            bytes = lib.genList (i: builtins.substring (i * 2) 2 chunk) 4;
+          in
+          lib.concatStrings (lib.reverseList bytes);
+        idArray = lib.concatStringsSep ", " (map (c: toString (hexToDecimal (reverseBytes c))) chunks);
       in
       ''
         pub const ${upper}_ELF: &[u8] = include_bytes!("${binPath}");
