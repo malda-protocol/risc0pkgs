@@ -34,6 +34,6 @@ nix develop
 
 At https://github.com/malda-protocol/risc0pkgs/commit/f1c8522a786fea9c3adae826a886a3a1fbf73d11 we were using combined vendor for Risc0 guest and host. Overall it works great, unless host methods is a workspace member and root's Cargo.lock introduces too many conflicting dependencies. Especially guest patches could easilly collide with host dependencies, and fixing that was not possible using single vendor directory.
 
-At branch `feature/experimental-vendor-split` we have experimental work on having two vendor directories, but it does not seem to be a good solution.
+At branch `feature/experimental-vendor-split` we have experimental work on having two vendor directories, but it does not seem to be a good solution. **Update:** probably it just requires cherry-picking 'submodule clone fix', same as the master branch - see commit ceb955bc0aa50a6dc6eec78f74492c293f9c0c4f.
 
 Currently we use a dedicated Risc0 guest build, and Risc0 host build. Quite a lot of shenanigans are used to mimic Risc0 build process... over time we will see if this is a good and maintainable approach.
