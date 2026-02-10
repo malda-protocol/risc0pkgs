@@ -114,6 +114,7 @@
           default = pkgs.mkShell {
             nativeBuildInputs = [
               pkgs.cargo
+              pkgs.risc0-rust
               pkgs.r0vm
               pkgs.riscv32-cc
             ];
