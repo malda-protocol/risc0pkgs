@@ -19,7 +19,7 @@ jobs:
           nix --version
 
       - name: format
-        run: nix build -L --no-link --show-trace .#checks.x86_64-linux.format
+        run: nix build -L --no-link --show-trace .#checks.x86_64-linux.formatting
 
       #- name: r0vm
       #  run: nix build -L --no-link --show-trace .#packages.x86_64-linux.r0vm

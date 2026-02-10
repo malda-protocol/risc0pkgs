@@ -7,6 +7,10 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -14,9 +18,25 @@
       self,
       nixpkgs,
       rust-overlay,
+      treefmt-nix,
       ...
     }:
     let
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-darwin"
+        "aarch64-linux" # builds from source (no prebuilt binaries available)
+        "x86_64-darwin" # builds from source (no prebuilt binaries available)
+      ];
+
+      treefmtEval = nixpkgs.lib.genAttrs supportedSystems (
+        system:
+        treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+        }
+      );
+
       eachSystem =
         systems: f:
         let
@@ -38,12 +58,7 @@
         in
         builtins.foldl' op { } systems;
 
-      eachDefaultSystem = eachSystem [
-        "x86_64-linux"
-        "aarch64-darwin"
-        "aarch64-linux" # builds from source (no prebuilt binaries available)
-        "x86_64-darwin" # builds from source (no prebuilt binaries available)
-      ];
+      eachDefaultSystem = eachSystem supportedSystems;
     in
     {
       overlays.default = import ./overlay.nix;
@@ -70,13 +85,9 @@
           inherit (pkgs) r0vm risc0-rust;
         };
 
-        formatter = pkgs.nixfmt-tree;
+        formatter = treefmtEval.${system}.config.build.wrapper;
 
-        checks.format = pkgs.runCommand "format-check" { buildInputs = [ pkgs.nixfmt-tree ]; } ''
-          cd ${self}
-          treefmt --ci
-          touch $out
-        '';
+        checks.formatting = treefmtEval.${system}.config.build.check self;
       }
     );
 }
