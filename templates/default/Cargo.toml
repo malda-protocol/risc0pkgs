@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 hello-world-methods = { path = "methods" }
-risc0-zkvm = "=3.0.4"
+risc0-zkvm = "3.0.5"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
