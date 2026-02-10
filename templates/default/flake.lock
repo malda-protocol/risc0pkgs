@@ -3,11 +3,11 @@
     "advisory-db": {
       "flake": false,
       "locked": {
-        "lastModified": 1770660774,
-        "narHash": "sha256-Kwo6BS7RKzpZ82BeHz5TFKjk6OllhMaYlmYEyYTZYWY=",
+        "lastModified": 1770729821,
+        "narHash": "sha256-s0LGPe73XhTRKEoOOeIyXvtUIrvjM1lfBzDAB6M2noQ=",
         "owner": "rustsec",
         "repo": "advisory-db",
-        "rev": "7c27bf211f7e4140eacbb74bbe5fcd6d9a0771d1",
+        "rev": "52e5da8d105fdd595ce1c3284692cf4790260409",
         "type": "github"
       },
       "original": {
@@ -41,11 +41,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1770715792,
-        "narHash": "sha256-MZ0YvFxvZj2DjZ6Ufviil6ZrVdqNlLLJAzbQAeKqHIQ=",
+        "lastModified": 1770733330,
+        "narHash": "sha256-E7AZhYmWbvWYeF1I2JqFkVT+TtaOr9VSaIbgWp9M3mY=",
         "owner": "malda-protocol",
         "repo": "risc0pkgs",
-        "rev": "db451af81b00d90ec0bb33050c36674333e5bb6d",
+        "rev": "a52139972316426ed30b0b7f6ff7dc7bccfc7d52",
         "type": "github"
       },
       "original": {
