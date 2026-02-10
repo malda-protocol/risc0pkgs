@@ -85,6 +85,8 @@
                 "base64-0.10.0" = "sha256-0NSljIX/yIt1dS+bq6i3DyeW82SosrScnH+/yTCMLII=";
                 "risc0-steel-2.4.1" = "sha256-fFsds95M8u2jjfFZ+M3AuX3CzwKG3XYsLgk0Bk32ras=";
                 "c-kzg-2.1.5" = "sha256-wlmTH0kGGYlVqlFetAMTkI0wQ/8n8uTx8baYgbQuAN4=";
+                "k256-0.13.4" = "sha256-aO1qewUyopojjJrzLA7BGddfBtcepyiMOrO27RmSM5E=";
+                "crypto-bigint-0.5.5" = "sha256-7kCaAgyJKOD5C7Av0po+NMqpNgRoA478URwOK7VF7Mc=";
               };
             };
           };
