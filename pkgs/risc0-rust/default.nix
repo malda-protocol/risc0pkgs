@@ -19,11 +19,7 @@ let
   prebuilt = callPackage ./prebuilt.nix { };
   fromSource = callPackage ./from-source.nix { };
 
-  selectedPackage =
-    if usePrebuilt then
-      prebuilt
-    else
-      fromSource;
+  selectedPackage = if usePrebuilt then prebuilt else fromSource;
 in
 selectedPackage.overrideAttrs (old: {
   passthru = (old.passthru or { }) // {
