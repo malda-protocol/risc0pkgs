@@ -48,6 +48,10 @@ ls ~/.risc0/toolchains/
 
 Make sure `settings.toml` references a version that matches one of the installed toolchains. If not, either update the version in `settings.toml` or re-enter `nix develop` to reconfigure it.
 
+### Building from source on platforms without prebuilts
+
+Prebuilt binaries are available for `x86_64-linux` and `aarch64-darwin`. On other platforms (e.g. `aarch64-linux`, `x86_64-darwin`), the Rust toolchain is compiled from source, which can take 1+ hours on the first build. Subsequent builds will use the cached result from the Nix store.
+
 ---
 
 ## Experiments

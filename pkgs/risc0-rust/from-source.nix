@@ -22,10 +22,6 @@ in
 rustc-unwrapped.overrideAttrs (oldAttrs: {
   pname = "rustc-risc0";
 
-  preBuild = (oldAttrs.preBuild or "") + ''
-    echo "risc0-rust: Building Rust toolchain from source. This will take a long time (1+ hours)."
-  '';
-
   # Override configure flags to build both host and Risc0 zkVM targets.
   # This ensures we have libs for both host (build scripts) and riscv (guest code).
   configureFlags =
