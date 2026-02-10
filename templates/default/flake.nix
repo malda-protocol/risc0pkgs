@@ -121,8 +121,8 @@
             shellHook = ''
               # Set up risc0 toolchain in expected location using symlinks.
               mkdir -p $HOME/.risc0/toolchains/${toolchainName}
-              ln -s ${pkgs.risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/bin
-              ln -s ${pkgs.risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
+              ln -sfn ${pkgs.risc0-rust}/bin $HOME/.risc0/toolchains/${toolchainName}/bin
+              ln -sfn ${pkgs.risc0-rust}/lib $HOME/.risc0/toolchains/${toolchainName}/lib
 
               # Create settings.toml with default rust version
               printf '[default_versions]\nrust = "%s"\n' "${rustVersion}" > $HOME/.risc0/settings.toml
