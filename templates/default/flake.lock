@@ -41,11 +41,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1770715640,
-        "narHash": "sha256-4uAAcafJmQfI/NkthgyGjBgrXOPlT2TALB2ku6et5Kc=",
+        "lastModified": 1770715792,
+        "narHash": "sha256-MZ0YvFxvZj2DjZ6Ufviil6ZrVdqNlLLJAzbQAeKqHIQ=",
         "owner": "malda-protocol",
         "repo": "risc0pkgs",
-        "rev": "f66c864938307dca438f19b9366db3b9d8d9d473",
+        "rev": "db451af81b00d90ec0bb33050c36674333e5bb6d",
         "type": "github"
       },
       "original": {
