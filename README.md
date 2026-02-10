@@ -48,6 +48,18 @@ ls ~/.risc0/toolchains/
 
 Make sure `settings.toml` references a version that matches one of the installed toolchains. If not, either update the version in `settings.toml` or re-enter `nix develop` to reconfigure it.
 
+### "RISC Zero zkVM feature bigint2 is not available"
+
+If your guest code depends on `risc0-bigint2`, you need to set the `RISC0_FEATURE_bigint2` environment variable. Add it to both your `buildRisc0Guest` derivation and your `devShells.default`:
+
+```nix
+# In buildRisc0Guest:
+RISC0_FEATURE_bigint2 = "";
+
+# In devShells.default mkShell:
+RISC0_FEATURE_bigint2 = "";
+```
+
 ### Building from source on platforms without prebuilts
 
 Prebuilt binaries are available for `x86_64-linux` and `aarch64-darwin`. On other platforms (e.g. `aarch64-linux`, `x86_64-darwin`), the Rust toolchain is compiled from source, which can take 1+ hours on the first build. Subsequent builds will use the cached result from the Nix store.
