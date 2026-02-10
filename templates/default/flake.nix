@@ -78,6 +78,7 @@
           guest = pkgs.buildRisc0Guest {
             pname = "multiply";
             src = ./methods/guest;
+            RISC0_FEATURE_bigint2 = "";
             cargoLock = {
               lockFile = ./methods/guest/Cargo.lock;
               outputHashes = {
@@ -112,6 +113,8 @@
         in
         {
           default = pkgs.mkShell {
+            RISC0_FEATURE_bigint2 = "";
+
             nativeBuildInputs = [
               pkgs.cargo
               pkgs.risc0-rust
