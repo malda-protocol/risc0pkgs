@@ -37,14 +37,15 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay",
+        "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1770714681,
-        "narHash": "sha256-38r3y+wCPD/qsGEs/3Sjeg7Imp7Q4INkasJ8yKJQASc=",
+        "lastModified": 1770715640,
+        "narHash": "sha256-4uAAcafJmQfI/NkthgyGjBgrXOPlT2TALB2ku6et5Kc=",
         "owner": "malda-protocol",
         "repo": "risc0pkgs",
-        "rev": "6b17222afd4b4402fe9055069add8b70b8d57399",
+        "rev": "f66c864938307dca438f19b9366db3b9d8d9d473",
         "type": "github"
       },
       "original": {
@@ -58,7 +59,7 @@
         "advisory-db": "advisory-db",
         "nixpkgs": "nixpkgs",
         "risc0pkgs": "risc0pkgs",
-        "treefmt-nix": "treefmt-nix"
+        "treefmt-nix": "treefmt-nix_2"
       }
     },
     "rust-overlay": {
@@ -83,6 +84,27 @@
       }
     },
     "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "risc0pkgs",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770228511,
+        "narHash": "sha256-wQ6NJSuFqAEmIg2VMnLdCnUc0b7vslUohqqGGD+Fyxk=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "337a4fe074be1042a35086f15481d763b8ddc0e7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
