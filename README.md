@@ -28,6 +28,26 @@ To get dropped into a development shell with all the required tooling, run:
 nix develop
 ```
 
+## Troubleshooting
+
+### Rust compiler version mismatch
+
+If you get errors about different Rust compilers being used (e.g. "found crate compiled by an incompatible version of rustc"), the `~/.risc0/settings.toml` file may be pointing to a stale or mismatched toolchain version.
+
+Check the current default:
+
+```sh
+cat ~/.risc0/settings.toml
+```
+
+List installed toolchains:
+
+```sh
+ls ~/.risc0/toolchains/
+```
+
+Make sure `settings.toml` references a version that matches one of the installed toolchains. If not, either update the version in `settings.toml` or re-enter `nix develop` to reconfigure it.
+
 ---
 
 ## Experiments
