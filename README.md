@@ -64,6 +64,8 @@ RISC0_FEATURE_bigint2 = "";
 
 Prebuilt binaries are available for `x86_64-linux` and `aarch64-darwin`. On other platforms (e.g. `aarch64-linux`, `x86_64-darwin`), the Rust toolchain is compiled from source, which can take 1+ hours on the first build. Subsequent builds will use the cached result from the Nix store.
 
+The from-source build requires nixpkgs with Rust >= 1.92, as this is the first version where RISC Zero toolchain changes are upstream and no patches are needed. Make sure your `flake.lock` pins a sufficiently recent nixpkgs revision.
+
 ---
 
 ## Experiments

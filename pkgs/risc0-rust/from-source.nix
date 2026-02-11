@@ -26,10 +26,14 @@ rustc-unwrapped.overrideAttrs (oldAttrs: {
   # This ensures we have libs for both host (build scripts) and riscv (guest code).
   configureFlags =
     (lib.filter (
-      flag: !(lib.hasPrefix "--target=" flag) && flag != "--enable-profiler" # profiler needs libc
+      flag:
+      !(lib.hasPrefix "--target=" flag)
+      && !(lib.hasPrefix "--tools=" flag)
+      && flag != "--enable-profiler" # profiler needs libc
     ) (oldAttrs.configureFlags or [ ]))
     ++ [
       "--target=${hostTarget},riscv32im-risc0-zkvm-elf"
+      "--tools=rustc,rustdoc,clippy,rustfmt,rust-analyzer-proc-macro-srv"
       "--disable-docs" # docs fail on bare-metal target
       # Use unwrapped clang for RISC-V cross-compilation
       # (wrapped clang adds hardening flags not supported on RISC-V)
