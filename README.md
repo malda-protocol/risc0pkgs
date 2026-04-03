@@ -75,3 +75,7 @@ At https://github.com/malda-protocol/risc0pkgs/commit/f1c8522a786fea9c3adae826a8
 At branch `feature/experimental-vendor-split` we have experimental work on having two vendor directories, but it does not seem to be a good solution. **Update:** probably it just requires cherry-picking 'submodule clone fix', same as the master branch - see commit ceb955bc0aa50a6dc6eec78f74492c293f9c0c4f.
 
 Currently we use a dedicated Risc0 guest build, and Risc0 host build. Quite a lot of shenanigans are used to mimic Risc0 build process... over time we will see if this is a good and maintainable approach.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
