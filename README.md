@@ -1,6 +1,6 @@
 # risc0pkgs - Nixified [RISC Zero](https://www.risczero.com/) Packages
 
-> **⚠️ This repository has been archived due to the sunset of the Malda Sequencer.**
+> **⚠️ This repository is no longer maintained by the core team. Community contributions are welcome.**
 
 `risc0pkgs` contains risc0 related packages like `r0vm` and risc0's `rustc` fork packaged with Nix. The following section describes how to set up a risc0 project from scratch.
 
