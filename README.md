@@ -4,6 +4,10 @@
 
 `risc0pkgs` contains risc0 related packages like `r0vm` and risc0's `rustc` fork packaged with Nix. The following section describes how to set up a risc0 project from scratch.
 
+## Context in Malda Sequencer
+
+This is a generic Nix helper for RISC Zero projects, providing deterministic builds of zkVM guests. Within the Malda ecosystem, it served as an extra build dependency for the ZkCoprocessor — specifically for deterministic builds of the zkVM guest program. The ZkCoprocessor can be built without it, but the resulting image ID will differ from the canonical one. This repository is kept separate because it is not Malda-specific and can be used with any RISC Zero project.
+
 ## Getting Started
 
 It's recommended to get started by initializing your project using the default template:
